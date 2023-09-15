@@ -2,13 +2,15 @@
 @file @main.py
 @author
 """
+import json
 import discord
 import numpy as np
 
-from bot_token import TOKEN, GUILD_ID
+from utils import get_tier
 from discord import app_commands
+from bot_token import TOKEN, GUILD_ID
 
-
+# Define Discord intents and client
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
@@ -240,9 +242,71 @@ async def contest(interaction, player_stat: int=10, opponent_stat: int=10,
     await interaction.response.send_message(return_string)
 
 
+@tree.command(name="gmc", description="Command to roll the characteristics of a random GMC on the spot.", guild=discord.Object(id=GUILD_ID))
+async def gmc(interaction, villain: bool = False):
+    return_string = "```\n"
+
+    # Load in data tables
+    gmc_table = json.load(open("gmc_tables.json", 'r'))
+
+    # If a villain, roll a motivation
+    if villain is True:
+        motivation = get_tier(np.random.randint(1, 20), gmc_table['villain_motivation'])
+        print(motivation)
+
+        return_string += f"{'Villain Motivation:':25}{motivation}\n"
+
+    # Roll for minor quirk
+    quirk = gmc_table['quirk'][str(np.random.randint(1, 20))]
+    return_string += f"{'Minor Quirk:':25}{quirk}\n"
+
+    # Roll for profession
+    profession_adj = get_tier(np.random.randint(1, 20), gmc_table['profession'])[0]
+    profession = get_tier(np.random.randint(1, 20), gmc_table['profession'])[1]
+    return_string += f"{'Profession:':25}{profession_adj} {profession}\n"
+
+    # Roll for Clothing Color
+    clothing_color = get_tier(np.random.randint(1, 20), gmc_table['clothing_color'])
+    return_string += f"{'Clothing Color:':25}{clothing_color}\n"
+
+    # Roll for Prominent Accessory
+    accessory = get_tier(np.random.randint(1, 20), gmc_table['prominent_accessory'])
+    return_string += f"{'Prominent Accessory:':25}{accessory}\n"
+
+    # Return formatted message
+    return_string += "```"
+    await interaction.response.send_message(return_string)
+
+
+@tree.command(name="bg_chars", description="Command to roll the characteristics of a group of background characters.", guild=discord.Object(id=GUILD_ID))
+async def bg_chars(interaction, num_characters: int = 1, roll_separate: bool = False):
+    return_string = "```\n"
+
+    # Load in data tables
+    gmc_table = json.load(open("gmc_tables.json", 'r'))
+
+    # If rolling together, just roll once and return
+    if roll_separate is False:
+        bg_adjective = get_tier(np.random.randint(1, 20), gmc_table['background_character'])[0]
+        bg_appearance = get_tier(np.random.randint(1, 20), gmc_table['background_character'])[1]
+        return_string += f"There is a group of {num_characters} people that are {bg_adjective} and {bg_appearance}\n```"
+        await interaction.response.send_message(return_string)
+
+    # Roll for separate characters
+    else:
+        for i in range(num_characters):
+            bg_adjective = get_tier(np.random.randint(1, 20), gmc_table['background_character'])[0]
+            bg_appearance = get_tier(np.random.randint(1, 20), gmc_table['background_character'])[1]
+            return_string += f"Character #{i:04d}: {bg_adjective} & {bg_appearance}\n"
+
+        return_string += "```"
+        await interaction.response.send_message(return_string)
+
+
 @client.event
 async def on_ready():
     await tree.sync(guild=discord.Object(id=GUILD_ID))
     print("Ready!")
+
 
 client.run(TOKEN)
