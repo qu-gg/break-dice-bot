@@ -5,7 +5,7 @@
 import discord
 import numpy as np
 
-from bot_token import TOKEN
+from bot_token import TOKEN, GUILD_ID
 from discord import app_commands
 
 
@@ -14,7 +14,7 @@ client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
 
-@tree.command(name="check", description="Command to roll a regular BREAK!! check, rolling under a given stat.", guild=discord.Object(id=1131671067367325806))
+@tree.command(name="check", description="Command to roll a regular BREAK!! check, rolling under a given stat.", guild=discord.Object(id=GUILD_ID))
 async def check(interaction, stat: int=10, edge: bool=False, bonus: int=0):
     # If no edge is given, then roll once and send
     if edge is False:
@@ -92,7 +92,7 @@ async def check(interaction, stat: int=10, edge: bool=False, bonus: int=0):
     await interaction.response.send_message(return_string)
 
 
-@tree.command(name="contest", description="Contest command for BREAK!!, in which two opponents try to roll under each other.", guild=discord.Object(id=1131671067367325806))
+@tree.command(name="contest", description="Contest command for BREAK!!, in which two opponents try to roll under each other.", guild=discord.Object(id=GUILD_ID))
 async def contest(interaction, player_stat: int=10, opponent_stat: int=10,
                   player_edge: bool=False, opponent_edge: bool=False, player_bonus: int=0, opponent_bonus: int=0):
     """
@@ -242,7 +242,7 @@ async def contest(interaction, player_stat: int=10, opponent_stat: int=10,
 
 @client.event
 async def on_ready():
-    await tree.sync(guild=discord.Object(id=1131671067367325806))
+    await tree.sync(guild=discord.Object(id=GUILD_ID))
     print("Ready!")
 
 client.run(TOKEN)
