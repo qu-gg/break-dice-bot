@@ -116,7 +116,6 @@ async def contest(interaction, player_stat: int=10, opponent_stat: int=10,
 
     # General catch for equal or lower first roll
     player_roll = player_roll_one
-    player_roll = 10
 
     # If an edge given, check if roll 2 was lower
     if player_edge is True:
@@ -148,7 +147,6 @@ async def contest(interaction, player_stat: int=10, opponent_stat: int=10,
 
     # General catch for equal or lower first roll
     opponent_roll = opponent_roll_one
-    opponent_roll = 5
 
     # If an edge given, check if roll 2 was lower
     if opponent_edge is True:
