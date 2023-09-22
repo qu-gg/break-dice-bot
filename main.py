@@ -7,6 +7,7 @@ import discord
 import numpy as np
 
 from utils import get_tier
+from conditions import Buttons
 from discord import app_commands
 from bot_token import TOKEN, GUILD_ID
 
@@ -95,21 +96,7 @@ async def check(interaction, stat: int=10, edge: bool=False, bonus: int=0):
 
 
 @tree.command(name="contest", description="Contest command for BREAK!!, in which two opponents try to roll under each other.", guild=discord.Object(id=GUILD_ID))
-async def contest(interaction, player_stat: int=10, opponent_stat: int=10,
-                  player_edge: bool=False, opponent_edge: bool=False, player_bonus: int=0, opponent_bonus: int=0):
-    """
-    Contest check function, which handles rolling and checking between two opponent rolls in every situation (e.g.
-    both succeed, one succeeds, both fail, etc.)
-    :param interaction:
-    :param player_stat:
-    :param opponent_stat:
-    :param player_edge:
-    :param opponent_edge:
-    :param player_bonus:
-    :param opponent_bonus:
-    :return:
-    """
-
+async def contest(interaction, player_stat: int=10, opponent_stat: int=10, player_edge: bool=False, opponent_edge: bool=False, player_bonus: int=0, opponent_bonus: int=0):
     """ Player Rolls """
     player_roll_one = np.random.randint(1, 20)
     player_roll_two = np.random.randint(1, 20)
@@ -202,35 +189,35 @@ async def contest(interaction, player_stat: int=10, opponent_stat: int=10,
         return_string += f"[2;34m[2;34m[2;31mOpponent Special Success![0m[2;34m[0m[2;34m[0m\n```"
 
     # Both succeed/fail, player has an edge
-    elif (player_success is True and opponent_success is True) or (player_success is False and opponent_success is False) and player_edge is True and opponent_edge is False:
+    elif ((player_success is True and opponent_success is True) or (player_success is False and opponent_success is False)) and player_edge is True and opponent_edge is False:
         return_string += f"[2;34m[2;34mPlayer Success by Edge![0m[2;34m[0m\n```"
 
     # Both succeed/fail, opponent has an edge
-    elif (player_success is True and opponent_success is True) or (player_success is False and opponent_success is False) and player_edge is False and opponent_edge is True:
+    elif ((player_success is True and opponent_success is True) or (player_success is False and opponent_success is False)) and player_edge is False and opponent_edge is True:
         return_string += f"[2;34m[2;34m[2;31mOpponent Success by Edge![0m[2;34m[0m[2;34m[0m\n```"
 
     # Both succeed/fail, player has larger bonus
-    elif (player_success is True and opponent_success is True) or (player_success is False and opponent_success is False) and player_bonus > opponent_bonus:
+    elif ((player_success is True and opponent_success is True) or (player_success is False and opponent_success is False)) and player_bonus > opponent_bonus:
         return_string += f"[2;34m[2;34mPlayer Success by Larger Bonus![0m[2;34m[0m\n```"
 
     # Both succeed/fail, opponent has an edge
-    elif (player_success is True and opponent_success is True) or (player_success is False and opponent_success is False) and opponent_bonus > player_bonus:
+    elif ((player_success is True and opponent_success is True) or (player_success is False and opponent_success is False)) and opponent_bonus > player_bonus:
         return_string += f"[2;34m[2;34m[2;31mOpponent Success by Larger Bonus![0m[2;34m[0m[2;34m[0m\n```"
 
     # Both succeed/fail, player has less penalty
-    elif (player_success is True and opponent_success is True) or (player_success is False and opponent_success is False) and player_bonus >= 0 and opponent_bonus < 0:
+    elif ((player_success is True and opponent_success is True) or (player_success is False and opponent_success is False)) and player_bonus >= 0 and opponent_bonus < 0:
         return_string += f"[2;34m[2;34mPlayer Success by Least Penalty![0m[2;34m[0m\n```"
 
     # Both succeed/fail, opponent has less penalty
-    elif (player_success is True and opponent_success is True) or (player_success is False and opponent_success is False) and player_bonus < 0 and opponent_bonus >= 0:
+    elif ((player_success is True and opponent_success is True) or (player_success is False and opponent_success is False)) and player_bonus < 0 and opponent_bonus >= 0:
         return_string += f"[2;34m[2;34m[2;31mOpponent Success by Least Penalty![0m[2;34m[0m[2;34m[0m\n```"
 
     # Both succeed/fail, player has the best natural roll
-    elif (player_success is True and opponent_success is True) or (player_success is False and opponent_success is False) and player_roll > opponent_roll:
+    elif ((player_success is True and opponent_success is True) or (player_success is False and opponent_success is False)) and player_roll > opponent_roll:
         return_string += f"[2;34m[2;34mPlayer Success by Best Natural Roll![0m[2;34m[0m\n```"
 
     # Both succeed/fail, opponent has the best natural roll
-    elif (player_success is True and opponent_success is True) or (player_success is False and opponent_success is False) and opponent_roll > player_roll:
+    elif ((player_success is True and opponent_success is True) or (player_success is False and opponent_success is False)) and opponent_roll > player_roll:
         return_string += f"[2;34m[2;34m[2;31mOpponent Success by Best Natural Roll![0m[2;34m[0m[2;34m[0m\n```"
 
     # Error or Stalemate
@@ -299,6 +286,12 @@ async def bg_chars(interaction, num_characters: int = 1, roll_separate: bool = F
 
         return_string += "```"
         await interaction.response.send_message(return_string)
+
+
+@tree.command(name="condition", description="Interactive command to display what all the conditions in BREAK!! do.", guild=discord.Object(id=GUILD_ID))
+async def condition_string(interaction):
+    return_string = "List of available conditions in BREAK!!"
+    await interaction.response.send_message(return_string, view=Buttons())
 
 
 @client.event
