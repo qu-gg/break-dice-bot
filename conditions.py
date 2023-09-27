@@ -10,9 +10,9 @@ import discord
 
 
 class Buttons(discord.ui.View):
-    def __init__(self, *, timeout=360):
+    def __init__(self, conditions, *, timeout=360):
         super().__init__(timeout=timeout)
-        self.conditions = json.load(open("conditions.json", 'r'))
+        self.conditions = conditions
 
     def get_condition_embed(self, condition_name):
         # Get condition values

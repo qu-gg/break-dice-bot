@@ -6,6 +6,7 @@ import json
 import discord
 import numpy as np
 
+from battlefield import BattlefieldButtons
 from utils import get_tier
 from conditions import Buttons
 from discord import app_commands
@@ -232,13 +233,15 @@ async def gmc(interaction, villain: bool = False):
     return_string = "```\n"
 
     # Load in data tables
-    gmc_table = json.load(open("gmc_tables.json", 'r'))
+    try:
+        gmc_table = json.load(open("gmc_tables.json", 'r'))
+    except FileNotFoundError as e:
+        await interaction.response.send_message("Required file [gmc_tables.json] not found!", delete_after=10.0)
+        return
 
     # If a villain, roll a motivation
     if villain is True:
         motivation = get_tier(np.random.randint(1, 20), gmc_table['villain_motivation'])
-        print(motivation)
-
         return_string += f"{'Villain Motivation:':25}{motivation}\n"
 
     # Roll for minor quirk
@@ -268,7 +271,11 @@ async def bg_chars(interaction, num_characters: int = 1, roll_separate: bool = F
     return_string = "```\n"
 
     # Load in data tables
-    gmc_table = json.load(open("gmc_tables.json", 'r'))
+    try:
+        gmc_table = json.load(open("gmc_tables.json", 'r'))
+    except FileNotFoundError as e:
+        await interaction.response.send_message("Required file [gmc_tables.json] not found!", delete_after=10.0)
+        return
 
     # If rolling together, just roll once and return
     if roll_separate is False:
@@ -290,8 +297,32 @@ async def bg_chars(interaction, num_characters: int = 1, roll_separate: bool = F
 
 @tree.command(name="condition", description="Interactive command to display what all the conditions in BREAK!! do.", guild=discord.Object(id=GUILD_ID))
 async def condition_string(interaction):
+    # Generic response to acknowledge connection
     return_string = "List of available conditions in BREAK!!"
-    await interaction.response.send_message(return_string, view=Buttons())
+
+    # Try to load in the conditions json, giving an error if not found
+    try:
+        conditions = json.load(open("conditions.json", 'r'))
+    except FileNotFoundError as e:
+        await interaction.response.send_message("Required file [conditions.json] not found!", delete_after=10.0)
+        return
+
+    await interaction.response.send_message(return_string, view=Buttons(conditions))
+
+
+@tree.command(name="battlefield", description="Interactive command to display what all the conditions in BREAK!! do.", guild=discord.Object(id=GUILD_ID))
+async def condition_string(interaction):
+    # Generic response to acknowledge connection
+    return_string = "List of available battlefield conditions in BREAK!!"
+
+    # Try to load in the conditions json, giving an error if not found
+    try:
+        conditions = json.load(open("battlefield.json", 'r'))
+    except FileNotFoundError as e:
+        await interaction.response.send_message("Required file [battlefield.json] not found!", delete_after=10.0)
+        return
+
+    await interaction.response.send_message(return_string, view=BattlefieldButtons(conditions))
 
 
 @client.event
