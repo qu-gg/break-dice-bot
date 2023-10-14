@@ -236,8 +236,8 @@ async def gmc(interaction, villain: bool = False):
     return_string += f"{'Minor Quirk:':25}{quirk}\n"
 
     # Roll for profession
-    profession_adj = get_tier(np.random.randint(1, 20), gmc_table['profession'])[0]
-    profession = get_tier(np.random.randint(1, 20), gmc_table['profession'])[1]
+    profession = get_tier(np.random.randint(1, 20), gmc_table['profession'])
+    profession_adj = get_tier(np.random.randint(1, 20), gmc_table['profession_adj'])
     return_string += f"{'Profession:':25}{profession_adj} {profession}\n"
 
     # Roll for Clothing Color
