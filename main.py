@@ -10,7 +10,7 @@ from battlefield import BattlefieldButtons
 from utils import get_tier
 from conditions import Buttons
 from discord import app_commands
-from bot_token import TOKEN, GUILD_ID
+from bot_token import TOKEN
 
 # Define Discord intents and client
 intents = discord.Intents.default()
@@ -53,7 +53,7 @@ def get_dice_roll(edge: bool=False, snag: bool=False):
     return rolls
 
 
-@tree.command(name="check", description="Command to roll a regular BREAK!! check, rolling under a given stat.", guild=discord.Object(id=GUILD_ID))
+@tree.command(name="check", description="Command to roll a regular BREAK!! check, rolling under a given stat.")
 async def check(interaction, stat: int=10, edge: bool=False, snag: bool=False, bonus: int=0):
     # Get the rolls
     rolls = get_dice_roll(edge, snag)
@@ -85,7 +85,7 @@ async def check(interaction, stat: int=10, edge: bool=False, snag: bool=False, b
     await interaction.response.send_message(return_string)
 
 
-@tree.command(name="contest", description="Contest command for BREAK!!, in which two opponents try to roll under each other.", guild=discord.Object(id=GUILD_ID))
+@tree.command(name="contest", description="Contest command for BREAK!!, in which two opponents try to roll under each other.")
 async def contest(interaction, player_stat: int=10, opponent_stat: int=10,
                   player_edge: bool=False, opponent_edge: bool=False,
                   player_snag: bool=False, opponent_snag: bool=False,
@@ -215,7 +215,7 @@ async def contest(interaction, player_stat: int=10, opponent_stat: int=10,
     await interaction.response.send_message(return_string)
 
 
-@tree.command(name="gmc", description="Command to roll the characteristics of a random GMC on the spot.", guild=discord.Object(id=GUILD_ID))
+@tree.command(name="gmc", description="Command to roll the characteristics of a random GMC on the spot.")
 async def gmc(interaction, villain: bool = False):
     return_string = "```\n"
 
@@ -253,7 +253,7 @@ async def gmc(interaction, villain: bool = False):
     await interaction.response.send_message(return_string)
 
 
-@tree.command(name="bg_chars", description="Command to roll the characteristics of a group of background characters.", guild=discord.Object(id=GUILD_ID))
+@tree.command(name="bg_chars", description="Command to roll the characteristics of a group of background characters.")
 async def bg_chars(interaction, num_characters: int = 1, roll_separate: bool = False):
     return_string = "```\n"
 
@@ -282,7 +282,7 @@ async def bg_chars(interaction, num_characters: int = 1, roll_separate: bool = F
         await interaction.response.send_message(return_string)
 
 
-@tree.command(name="condition", description="Interactive command to display what all the conditions in BREAK!! do.", guild=discord.Object(id=GUILD_ID))
+@tree.command(name="condition", description="Interactive command to display what all the conditions in BREAK!! do.")
 async def condition_string(interaction):
     # Generic response to acknowledge connection
     return_string = "List of available conditions in BREAK!!"
@@ -297,7 +297,7 @@ async def condition_string(interaction):
     await interaction.response.send_message(return_string, view=Buttons(conditions))
 
 
-@tree.command(name="battlefield", description="Interactive command to display what all the conditions in BREAK!! do.", guild=discord.Object(id=GUILD_ID))
+@tree.command(name="battlefield", description="Interactive command to display what all the conditions in BREAK!! do.")
 async def condition_string(interaction):
     # Generic response to acknowledge connection
     return_string = "List of available battlefield conditions in BREAK!!"
@@ -314,7 +314,7 @@ async def condition_string(interaction):
 
 @client.event
 async def on_ready():
-    await tree.sync(guild=discord.Object(id=GUILD_ID))
+    await tree.sync()
     print("Ready!")
 
 
