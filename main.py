@@ -18,160 +18,147 @@ client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
 
+def get_dice_roll(edge: bool=False, snag: bool=False):
+    """
+    Handles getting the rolls in the face of edges or snags
+    :param edge: Whether to roll at advantage
+    :param snag: Whether to roll at disadvantage
+    :return: Dictionary of the higer and lower result
+    """
+    # Dictionary to hold roll outputs
+    rolls = {
+        'main_roll': "",
+        'secondary_roll': ""
+    }
+
+    # Make two rolls always
+    roll_one = np.random.randint(1, 20)
+    roll_two = np.random.randint(1, 20)
+
+    # Regular roll if no edge/snag or both edge/snag
+    if (edge is False and snag is False) or (edge is True and snag is True):
+        rolls['main_roll'] = roll_one
+
+    # If an edge, roll twice and take the better result
+    elif edge is True and snag is False:
+        rolls['main_roll'] = roll_one if roll_one < roll_two else roll_two
+        rolls['secondary_roll'] = roll_two if roll_one < roll_two else roll_one
+
+    # If a snag, roll twice and take the worse result
+    elif edge is False and snag is True:
+        rolls['main_roll'] = roll_one if roll_one > roll_two else roll_two
+        rolls['secondary_roll'] = roll_two if roll_one > roll_two else roll_one
+
+    # Return dict
+    return rolls
+
+
 @tree.command(name="check", description="Command to roll a regular BREAK!! check, rolling under a given stat.", guild=discord.Object(id=GUILD_ID))
-async def check(interaction, stat: int=10, edge: bool=False, bonus: int=0):
-    # If no edge is given, then roll once and send
-    if edge is False:
-        # Roll the dice
-        roll_one = np.random.randint(1, 20)
-        roll_two = ""
+async def check(interaction, stat: int=10, edge: bool=False, snag: bool=False, bonus: int=0):
+    # Get the rolls
+    rolls = get_dice_roll(edge, snag)
 
-        # Check against stat
-        result_string = f"[2;34m[2;34m[2;31mFailure![0m[2;34m[0m[2;34m[0m"
-        if roll_one - bonus <= stat:
-            result_string = f"[2;34m[2;34mSuccess![0m[2;34m[0m"
+    # Check against stat
+    result_string = f"[2;34m[2;34m[2;31mFailure![0m[2;34m[0m[2;34m[0m"
+    if rolls['main_roll'] - bonus <= stat:
+        result_string = f"[2;34m[2;34mSuccess![0m[2;34m[0m"
 
-        if roll_one == stat:
-            result_string = f"[2;34m[2;34m[2;31m[1;31m[1;35mCritical Success![1;35m[0m[1;35m[0m[1;31m[0m[2;31m[0m[2;34m[0m[2;34m[0m"
+    if rolls['main_roll'] == stat:
+        result_string = f"[2;34m[2;34m[2;31m[1;31m[1;35mCritical Success![1;35m[0m[1;35m[0m[1;31m[0m[2;31m[0m[2;34m[0m[2;34m[0m"
 
-        # Scenario when there's no edge or bonus
-        if roll_two == "" and bonus == 0:
-            return_string = f"```ansi\n" \
-                            f"Stat: {stat}\n" \
-                            f"Roll: {roll_one}\n" \
-                            f"Result: {result_string}\n" \
-                            f"```"
+    # Build the output iteratively, starting with the given stat
+    return_string = f"```ansi\n" \
+                    f"Stat: {stat}\n" \
 
-        # Scenario with no edge but a bonus
-        elif roll_two == "" and bonus != 0:
-            return_string = f"```ansi\n" \
-                            f"Stat: {stat}\n" \
-                            f"Roll: {roll_one}\n" \
-                            f"Bonus: {bonus}\n" \
-                            f"Result: {result_string}\n" \
-                            f"```"
-
-    # With the edge, roll twice - pick best result
+    # Then add the roll, noting the edge or snag
+    if (edge is False and snag is False) or (edge is True and snag is True):
+        return_string += f"Roll: {rolls['main_roll']}\n"
     else:
-        # Roll the dice
-        roll_one = np.random.randint(1, 20)
-        roll_two = np.random.randint(1, 20)
+        return_string += f"Roll: {rolls['main_roll']} ([2;30m{rolls['secondary_roll']}[0m[2;30m[0m)\n"
 
-        # Set highest and lowest
-        if roll_one < roll_two:
-            lower_roll = roll_one
-            higher_roll = roll_two
-        elif roll_two < roll_one:
-            lower_roll = roll_two
-            higher_roll = roll_one
-        else:
-            lower_roll = roll_one
-            higher_roll = roll_two
+    # If a bonus was applied or not
+    if bonus != 0:
+        return_string += f"Bonus: {bonus}\n"
 
-        # Check against stat
-        result_string = f"[2;34m[2;34m[2;31mFailure![0m[2;34m[0m[2;34m[0m"
-        if lower_roll - bonus <= stat:
-            result_string = f"[2;34m[2;34mSuccess![0m[2;34m[0m"
-
-        if lower_roll == stat:
-            result_string = f"[2;34m[2;34m[2;31m[1;31m[1;35mCritical Success![1;35m[0m[1;35m[0m[1;31m[0m[2;31m[0m[2;34m[0m[2;34m[0m"
-
-        # Scenario when there's no edge or bonus
-        if bonus == 0:
-            return_string = f"```ansi\n" \
-                            f"Stat: {stat}\n" \
-                            f"Roll (w/ Edge): {lower_roll} ({higher_roll})\n" \
-                            f"Result: {result_string}\n" \
-                            f"```"
-
-        # Scenario with no edge but a bonus
-        elif bonus != 0:
-            return_string = f"```ansi\n" \
-                            f"Stat: {stat}\n" \
-                            f"Roll (w/ Edge): {lower_roll} ({higher_roll})\n" \
-                            f"Bonus: {bonus}\n" \
-                            f"Result: {result_string}\n" \
-                            f"```"
-
+    # Finish up string and send it back
+    return_string += f"Result: ({rolls['main_roll'] - bonus}/{stat}) {result_string}\n```"
     await interaction.response.send_message(return_string)
 
 
 @tree.command(name="contest", description="Contest command for BREAK!!, in which two opponents try to roll under each other.", guild=discord.Object(id=GUILD_ID))
-async def contest(interaction, player_stat: int=10, opponent_stat: int=10, player_edge: bool=False, opponent_edge: bool=False, player_bonus: int=0, opponent_bonus: int=0):
+async def contest(interaction, player_stat: int=10, opponent_stat: int=10,
+                  player_edge: bool=False, opponent_edge: bool=False,
+                  player_snag: bool=False, opponent_snag: bool=False,
+                  player_bonus: int=0, opponent_bonus: int=0):
     """ Player Rolls """
-    player_roll_one = np.random.randint(1, 20)
-    player_roll_two = np.random.randint(1, 20)
-
-    # General catch for equal or lower first roll
-    player_roll = player_roll_one
-
-    # If an edge given, check if roll 2 was lower
-    if player_edge is True:
-        if player_roll_two < player_roll_one:
-            player_roll = player_roll_two
+    player_rolls = get_dice_roll(player_edge, player_snag)
 
     # Check for player success
     player_success = False
     player_success_string = "[2;34m[2;34m[2;31mFailure![0m[2;34m[0m[2;34m[0m"
-    if player_roll - player_bonus <= player_stat:
+    if player_rolls['main_roll'] - player_bonus <= player_stat:
         player_success = True
         player_success_string = f"[2;34m[2;34mSuccess![0m[2;34m[0m"
 
     # Check for player critical success
     player_special_success = False
-    if player_roll == player_stat:
+    if player_rolls['main_roll'] == player_stat:
         player_success = True
         player_special_success = True
         player_success_string = f"[2;34m[2;34m[2;31m[1;31m[1;35mCritical Success![1;35m[0m[1;35m[0m[1;31m[0m[2;31m[0m[2;34m[0m[2;34m[0m"
 
-    # Get string for player bonus
-    player_bonus_string = ""
-    if player_bonus != 0:
-        player_bonus_string = f"- {player_bonus} = {player_roll - player_bonus}"
-
     """ Opponent Rolls """
-    opponent_roll_one = np.random.randint(1, 20)
-    opponent_roll_two = np.random.randint(1, 20)
-
-    # General catch for equal or lower first roll
-    opponent_roll = opponent_roll_one
-
-    # If an edge given, check if roll 2 was lower
-    if opponent_edge is True:
-        if opponent_roll_two < opponent_roll_one:
-            opponent_roll = opponent_roll_two
+    opponent_rolls = get_dice_roll(opponent_edge, opponent_snag)
 
     # Check for opponent success
     opponent_success = False
     opponent_success_string = "[2;34m[2;34m[2;31mFailure![0m[2;34m[0m[2;34m[0m"
-    if opponent_roll - opponent_bonus <= opponent_stat:
+    if opponent_rolls['main_roll'] - opponent_bonus <= opponent_stat:
         opponent_success = True
         opponent_success_string = f"[2;34m[2;34mSuccess![0m[2;34m[0m"
 
     # Check for opponent critical success
     opponent_special_success = False
-    if opponent_roll == opponent_stat:
+    if opponent_rolls['main_roll'] == opponent_stat:
         opponent_success = True
         opponent_special_success = True
         opponent_success_string = f"[2;34m[2;34m[2;31m[1;31m[1;35mCritical Success![1;35m[0m[1;35m[0m[1;31m[0m[2;31m[0m[2;34m[0m[2;34m[0m"
 
-    # Get string for opponent bonus
-    opponent_bonus_string = ""
+    """ Build the string block """
+    return_string = f"```ansi\n"
+
+    # Player stats/rolls
+    return_string += f"[1;2m[4;2mPlayer[0m[0m[2;30m[0m\n"
+    return_string += f"Stat: {player_stat}\n"
+
+    if (player_edge is False and player_snag is False) or (player_edge is True and player_snag is True):
+        return_string += f"Roll: {player_rolls['main_roll']}\n"
+    else:
+        return_string += f"Roll: {player_rolls['main_roll']} ([2;30m{player_rolls['secondary_roll']}[0m[2;30m[0m)\n"
+
+    if player_bonus != 0:
+        return_string += f"Bonus: {player_bonus}\n"
+
+    return_string += f"Result: ({player_rolls['main_roll'] - player_bonus}/{player_stat}) {player_success_string}\n"
+    return_string += f"\n"
+
+    # Opponent stats/rolls
+    return_string += "[1;2m[4;2mOpponent[0m[0m[2;30m[0m\n"
+    return_string += f"Stat: {opponent_stat}\n"
+
+    if (opponent_edge is False and opponent_snag is False) or (opponent_edge is True and opponent_snag is True):
+        return_string += f"Roll: {opponent_rolls['main_roll']}\n"
+    else:
+        return_string += f"Roll: {opponent_rolls['main_roll']} ([2;30m{opponent_rolls['secondary_roll']}[0m[2;30m[0m)\n"
+
     if opponent_bonus != 0:
-        opponent_bonus_string = f"- {opponent_bonus} = {opponent_roll - opponent_bonus}"
+        return_string += f"Bonus: {opponent_bonus}\n"
+
+    return_string += f"Result: ({opponent_rolls['main_roll'] - opponent_bonus}/{opponent_stat}) {opponent_success_string}\n"
+    return_string += f"\n"
 
     """ Win Condition Checks """
-    return_string = f"```ansi\n" \
-                    f"Player Stat: {player_stat}\n" \
-                    f"Player Edge: {player_edge}\n" \
-                    f"Player Roll: {player_roll} {player_bonus_string}\n" \
-                    f"Player Result: {player_success_string}\n" \
-                    f"\n" \
-                    f"Opponent Stat: {opponent_stat}\n" \
-                    f"Opponent Edge: {opponent_edge}\n" \
-                    f"Opponent Roll: {opponent_roll} {opponent_bonus_string}\n" \
-                    f"Opponent Result: {opponent_success_string}\n" \
-                    f"\n" \
+    return_string += "[1;2m[4;2mResult[0m[0m[2;30m[0m\n"
 
     # Player succeeds, Opponent Fails
     if player_success is True and opponent_success is False:
@@ -201,7 +188,7 @@ async def contest(interaction, player_stat: int=10, opponent_stat: int=10, playe
     elif ((player_success is True and opponent_success is True) or (player_success is False and opponent_success is False)) and player_bonus > opponent_bonus:
         return_string += f"[2;34m[2;34mPlayer Success by Larger Bonus![0m[2;34m[0m\n```"
 
-    # Both succeed/fail, opponent has an edge
+    # Both succeed/fail, opponent has larger bonus
     elif ((player_success is True and opponent_success is True) or (player_success is False and opponent_success is False)) and opponent_bonus > player_bonus:
         return_string += f"[2;34m[2;34m[2;31mOpponent Success by Larger Bonus![0m[2;34m[0m[2;34m[0m\n```"
 
@@ -214,11 +201,11 @@ async def contest(interaction, player_stat: int=10, opponent_stat: int=10, playe
         return_string += f"[2;34m[2;34m[2;31mOpponent Success by Least Penalty![0m[2;34m[0m[2;34m[0m\n```"
 
     # Both succeed/fail, player has the best natural roll
-    elif ((player_success is True and opponent_success is True) or (player_success is False and opponent_success is False)) and player_roll > opponent_roll:
+    elif ((player_success is True and opponent_success is True) or (player_success is False and opponent_success is False)) and player_rolls['main_roll'] > opponent_rolls['main_roll']:
         return_string += f"[2;34m[2;34mPlayer Success by Best Natural Roll![0m[2;34m[0m\n```"
 
     # Both succeed/fail, opponent has the best natural roll
-    elif ((player_success is True and opponent_success is True) or (player_success is False and opponent_success is False)) and opponent_roll > player_roll:
+    elif ((player_success is True and opponent_success is True) or (player_success is False and opponent_success is False)) and opponent_rolls['main_roll'] > player_rolls['main_roll']:
         return_string += f"[2;34m[2;34m[2;31mOpponent Success by Best Natural Roll![0m[2;34m[0m[2;34m[0m\n```"
 
     # Error or Stalemate
