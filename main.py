@@ -53,6 +53,60 @@ def get_dice_roll(edge: bool=False, snag: bool=False):
     return rolls
 
 
+def get_roll_string(rolls, edge, snag):
+    """
+    Handles getting the appropriate ANSI string for a given set of rolls
+    :param rolls: dictionary of the main and secondary rolls
+    :param edge: whether an edge was applied
+    :param snag: whether a snag was applied
+    :return: ANSI color-coated string with the rolls
+    """
+    if (edge is False and snag is False) or (edge is True and snag is True):
+        return f"Roll: {rolls['main_roll']}\n"
+    else:
+        return f"Roll: {rolls['main_roll']} ([2;30m{rolls['secondary_roll']}[0m[2;30m[0m)\n"
+
+
+@tree.command(name="roll", description="Command to roll a roll in BREAK!!")
+async def roll(interaction, edge: bool=False, snag: bool=False):
+    # Get the rolls
+    rolls = get_dice_roll(edge, snag)
+
+    # Build the output
+    return_string = f"```ansi\n" \
+                    f"{get_roll_string(rolls, edge, snag)}\n" \
+                    f"```" \
+
+    # Finish up string and send it back
+    await interaction.response.send_message(return_string)
+
+
+@tree.command(name="attack", description="Command to roll an attack check in BREAK!!")
+async def attack(interaction, edge: bool=False, snag: bool=False, bonus: int=0):
+    # Get the rolls
+    rolls = get_dice_roll(edge, snag)
+
+    # If edge, swap the rolls (given we want highest here)
+    if (edge is True and snag is False) or (edge is False and snag is True):
+        temp_roll = rolls['main_roll']
+        rolls['main_roll'] = rolls['secondary_roll']
+        rolls['secondary_roll'] = temp_roll
+
+    # Build the output iteratively
+    return_string = f"```ansi\n" \
+
+    # Then add the roll, noting the edge or snag
+    return_string += get_roll_string(rolls, edge, snag)
+
+    # If a bonus was applied or not
+    if bonus != 0:
+        return_string += f"Bonus: {bonus}\n"
+
+    # Finish up string and send it back
+    return_string += f"[1;2mResult: {rolls['main_roll'] + bonus}[0m\n```"
+    await interaction.response.send_message(return_string)
+
+
 @tree.command(name="check", description="Command to roll a regular BREAK!! check, rolling under a given stat.")
 async def check(interaction, stat: int=10, edge: bool=False, snag: bool=False, bonus: int=0):
     # Get the rolls
@@ -63,18 +117,18 @@ async def check(interaction, stat: int=10, edge: bool=False, snag: bool=False, b
     if rolls['main_roll'] - bonus <= stat:
         result_string = f"[2;34m[2;34mSuccess![0m[2;34m[0m"
 
-    if rolls['main_roll'] == stat:
+    if rolls['main_roll'] == stat or (rolls['secondary_roll'] == stat and edge is True and snag is False):
         result_string = f"[2;34m[2;34m[2;31m[1;31m[1;35mCritical Success![1;35m[0m[1;35m[0m[1;31m[0m[2;31m[0m[2;34m[0m[2;34m[0m"
+
+    if rolls['main_roll'] == 20 and stat != 20:
+        result_string = f"[2;34m[2;34m[2;31mNat 20, Automatic Failure![0m[2;34m[0m[2;34m[0m"
 
     # Build the output iteratively, starting with the given stat
     return_string = f"```ansi\n" \
                     f"Stat: {stat}\n" \
 
     # Then add the roll, noting the edge or snag
-    if (edge is False and snag is False) or (edge is True and snag is True):
-        return_string += f"Roll: {rolls['main_roll']}\n"
-    else:
-        return_string += f"Roll: {rolls['main_roll']} ([2;30m{rolls['secondary_roll']}[0m[2;30m[0m)\n"
+    return_string += get_roll_string(rolls, edge, snag)
 
     # If a bonus was applied or not
     if bonus != 0:
@@ -102,10 +156,15 @@ async def contest(interaction, player_stat: int=10, opponent_stat: int=10,
 
     # Check for player critical success
     player_special_success = False
-    if player_rolls['main_roll'] == player_stat:
+    if player_rolls['main_roll'] == player_stat or (player_rolls['secondary_roll'] == player_stat and player_edge is True and player_snag is False):
         player_success = True
         player_special_success = True
         player_success_string = f"[2;34m[2;34m[2;31m[1;31m[1;35mCritical Success![1;35m[0m[1;35m[0m[1;31m[0m[2;31m[0m[2;34m[0m[2;34m[0m"
+
+    # Check for player crit fail
+    if player_rolls['main_roll'] == 20 and player_stat != 20:
+        player_success = False
+        player_success_string = "[2;34m[2;34m[2;31mNat 20, Automatic Failure![0m[2;34m[0m[2;34m[0m"
 
     """ Opponent Rolls """
     opponent_rolls = get_dice_roll(opponent_edge, opponent_snag)
@@ -119,10 +178,15 @@ async def contest(interaction, player_stat: int=10, opponent_stat: int=10,
 
     # Check for opponent critical success
     opponent_special_success = False
-    if opponent_rolls['main_roll'] == opponent_stat:
+    if opponent_rolls['main_roll'] == opponent_stat or (opponent_rolls['secondary_roll'] == opponent_stat and opponent_edge is True and opponent_snag is False):
         opponent_success = True
         opponent_special_success = True
         opponent_success_string = f"[2;34m[2;34m[2;31m[1;31m[1;35mCritical Success![1;35m[0m[1;35m[0m[1;31m[0m[2;31m[0m[2;34m[0m[2;34m[0m"
+
+    # Check for opponent crit fail
+    if opponent_rolls['main_roll'] == 20 and opponent_stat != 20:
+        opponent_success = False
+        opponent_success_string = "[2;34m[2;34m[2;31mNat 20, Automatic Failure![0m[2;34m[0m[2;34m[0m"
 
     """ Build the string block """
     return_string = f"```ansi\n"
@@ -130,11 +194,7 @@ async def contest(interaction, player_stat: int=10, opponent_stat: int=10,
     # Player stats/rolls
     return_string += f"[1;2m[4;2mPlayer[0m[0m[2;30m[0m\n"
     return_string += f"Stat: {player_stat}\n"
-
-    if (player_edge is False and player_snag is False) or (player_edge is True and player_snag is True):
-        return_string += f"Roll: {player_rolls['main_roll']}\n"
-    else:
-        return_string += f"Roll: {player_rolls['main_roll']} ([2;30m{player_rolls['secondary_roll']}[0m[2;30m[0m)\n"
+    return_string += get_roll_string(player_rolls, player_edge, player_snag)
 
     if player_bonus != 0:
         return_string += f"Bonus: {player_bonus}\n"
@@ -145,11 +205,7 @@ async def contest(interaction, player_stat: int=10, opponent_stat: int=10,
     # Opponent stats/rolls
     return_string += "[1;2m[4;2mOpponent[0m[0m[2;30m[0m\n"
     return_string += f"Stat: {opponent_stat}\n"
-
-    if (opponent_edge is False and opponent_snag is False) or (opponent_edge is True and opponent_snag is True):
-        return_string += f"Roll: {opponent_rolls['main_roll']}\n"
-    else:
-        return_string += f"Roll: {opponent_rolls['main_roll']} ([2;30m{opponent_rolls['secondary_roll']}[0m[2;30m[0m)\n"
+    return_string += get_roll_string(opponent_rolls, opponent_edge, opponent_snag)
 
     if opponent_bonus != 0:
         return_string += f"Bonus: {opponent_bonus}\n"
@@ -160,8 +216,16 @@ async def contest(interaction, player_stat: int=10, opponent_stat: int=10,
     """ Win Condition Checks """
     return_string += "[1;2m[4;2mResult[0m[0m[2;30m[0m\n"
 
+    # Player auto-fails with a nat20
+    if player_rolls['main_roll'] == 20 and opponent_rolls['main_roll'] != 20:
+        return_string += f"[2;34m[2;34m[2;31mOpponent Success![0m[2;34m[0m[2;34m[0m\n```"
+
+    # Opponent auto-fails with a nat20
+    elif player_rolls['main_roll'] != 20 and opponent_rolls['main_roll'] == 20:
+        return_string += f"[2;34m[2;34mPlayer Success![0m[2;34m[0m\n```"
+
     # Player succeeds, Opponent Fails
-    if player_success is True and opponent_success is False:
+    elif player_success is True and opponent_success is False:
         return_string += f"[2;34m[2;34mPlayer Success![0m[2;34m[0m\n```"
 
     # Player fails, Opponent Succeeds
