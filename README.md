@@ -1,7 +1,6 @@
 # break-dice-bot
-A Discord.py Bot that handles check and contest mechanics for the TTRPG BREAK!!<br>
-It is primarily self-hosted and a specific guild ID is specified for it to work on my servers, however you can remove it
-and it will still work.
+A Discord.py Bot that handles check and contest mechanics for the TTRPG BREAK!!,<br>
+self-hosted by the user to enable uptime whenever they want.
 
 ### How to Host
 If you want to run and host it for your own server, follow the next few steps.<br>
@@ -14,13 +13,21 @@ It is a bit technical and an in-depth explanation on setting up a Discord Bot wo
     <li>A Discord Bot setup</li>
 </ul>
 
+<b>Links:</b>
+<ul>
+    <li>Python: https://www.python.org/downloads/</li>
+    <li>Discord.py: https://pypi.org/project/discord.py/</li>
+    <li>Git: https://git-scm.com/</li>
+</ul>
+
 <b>Steps:</b>
 1. Run <code>git clone https://github.com/qu-gg/break-dice-bot.git </code> in the command line (cmd)
 2. Add a file to the folder called <code>bot_token.py</code>
 3. In that file, add the line <code>BOT_TOKEN = "XXX"</code> where XXX is your client secret key
-4. Also in that file, add the line <code>GUILD_ID = YYY</code> where YYY is your server's guild ID
-5. Invite the bot with your bot link in the Discord Developer Portal
-6. Run the bot via <code>python main.py</code>
+4. Invite the bot with your bot link in the Discord Developer Portal.
+5. Run the bot via <code>python main.py</code>
+
+Example of an appropriate bot link, changing CLIENT_ID_HERE with the Client ID from the Discord Bot Portal: https://discord.com/api/oauth2/authorize?client_id=CLIENT_ID_HERE&permissions=2048&scope=bot
 
 ### Command Examples
 Check and Contest mechanics are provided out of the box, with parameters in Discord to set stats, edges, and bonuses.<br>
