@@ -92,8 +92,6 @@ async def attack(interaction, edge: bool=False, snag: bool=False, bonus: int=0):
         rolls['main_roll'] = rolls['secondary_roll']
         rolls['secondary_roll'] = temp_roll
 
-    rolls['main_roll'] = 1
-
     # Build the output iteratively
     return_string = f"```ansi\n" \
 
