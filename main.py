@@ -417,7 +417,7 @@ async def injury(interaction, injury_type: app_commands.Choice[str]):
     embed = (discord.Embed(title=f"{injury_name}", color=0x15dbc7))
     embed.add_field(name="Description", value=injury_desc, inline=False)
     embed.add_field(name="Effects", value=injury_effect, inline=False)
-    await interaction.response.send_message(f"Rolled {injury_roll} on the {injury_type.title()} Table.", embed=embed)
+    await interaction.response.send_message(f"Rolled {injury_roll} on the {injury_type.title()} Injury Table.", embed=embed)
 
 
 @tree.command(name="burn", description="Command to roll on the Caustic/Burning Injury Table in BREAK!!")
