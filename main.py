@@ -103,7 +103,17 @@ async def attack(interaction, edge: bool=False, snag: bool=False, bonus: int=0):
         return_string += f"Bonus: {bonus}\n"
 
     # Finish up string and send it back
-    return_string += f"[1;2mResult: {rolls['main_roll'] + bonus}[0m\n```"
+    return_string += f"[1;2mResult: {rolls['main_roll'] + bonus}[0m"
+
+    # Check for crit fail or crit success
+    if rolls['main_roll'] == 20:
+        return_string += ", [2;34m[2;34m[2;31m[1;31m[1;35mCritical Success![1;35m[0m[1;35m[0m[1;31m[0m[2;31m[0m[2;34m[0m[2;34m[0m"
+
+    if rolls['main_roll'] == 1:
+        return_string += ", [2;34m[2;34m[2;31mNat 20, Automatic Failure![0m[2;34m[0m[2;34m[0m"
+
+    # Finish the string and return
+    return_string += "\n```"
     await interaction.response.send_message(return_string)
 
 
@@ -374,6 +384,40 @@ async def condition_string(interaction):
         return
 
     await interaction.response.send_message(return_string, view=BattlefieldButtons(conditions))
+
+
+@tree.command(name="injury", description="Command to roll on a given injury table in BREAK!!")
+@app_commands.choices(injury_type=[
+        app_commands.Choice(name="Light", value="light"),
+        app_commands.Choice(name="Severe", value="severe"),
+        app_commands.Choice(name="Critical", value="critical")
+    ])
+async def injury(interaction, injury_type: app_commands.Choice[str]):
+    # Change injury_type parameter to its value
+    injury_type = injury_type.value
+
+    # Load the json file
+    try:
+        injury_table = json.load(open("injury_table.json", 'r'))
+    except FileNotFoundError:
+        await interaction.response.send_message("Required file [injury_table.json] not found!", delete_after=10.0)
+        return
+
+    # Roll the tier
+    injury_roll = np.random.randint(1, 20)
+
+    # Get condition values
+    injury_dict = get_tier(injury_roll, injury_table[injury_type])
+    injury_name = injury_dict['name']
+    injury_desc = injury_dict['description']
+    injury_effect = injury_dict['effect']
+
+    # Build embed to return
+    # TODO add image urls here
+    embed = (discord.Embed(title=f"{injury_name}", color=0x15dbc7))
+    embed.add_field(name="Description", value=injury_desc, inline=False)
+    embed.add_field(name="Effects", value=injury_effect, inline=False)
+    await interaction.response.send_message(f"Rolled {injury_roll} on the {injury_type.title()} Table.", embed=embed)
 
 
 @client.event

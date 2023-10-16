@@ -1,0 +1,33 @@
+{
+  "villain_motivation": {
+    "1-2": "...",
+    "3-4": "...",
+    "...": "...",
+    "19-20": "..."
+  },
+  "quirk": {
+    "1": "...",
+    "2": "...",
+    "3": "..."
+  },
+  "profession_adj": {
+    "1-2": "...",
+    "3-4": "..."
+  },
+  "profession": {
+    "1-2": "...",
+    "3-4": "..."
+  },
+  "clothing_color": {
+    "1-2": "...",
+    "3-4": "..."
+  },
+  "prominent_accessory": {
+    "1-2": "...",
+    "3-4": "..."
+  },
+  "background_character": {
+    "1-2  ": ["FirstColumn", "SecondColumn"],
+    "3-4  ": ["FirstColumn", "SecondColumn"]
+  }
+}

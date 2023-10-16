@@ -1,0 +1,54 @@
+{
+  "light": {
+    "1-5": {
+      "name": "Injury name",
+      "description": "Small description under the name",
+      "effect": "Bulleted list of the condition's effects, using \n characters."
+    },
+    "6-10": {
+      "name": "Injury name",
+      "description": "Small description under the name",
+      "effect": "Bulleted list of the condition's effects, using \n characters."
+    }
+  },
+  "severe": {
+    "1-3": {
+      "name": "Injury name",
+      "description": "Small description under the name",
+      "effect": "Bulleted list of the condition's effects, using \n characters."
+    },
+    "4-6": {
+      "name": "Injury name",
+      "description": "Small description under the name",
+      "effect": "Bulleted list of the condition's effects, using \n characters."
+    },
+    "...": {
+
+    },
+    "18-18": {
+      "name": "Injury name",
+      "description": "Small description under the name",
+      "effect": "Bulleted list of the condition's effects, using \n characters."
+    }
+  },
+  "critical": {
+    "1-2": {
+      "name": "Injury name",
+      "description": "Small description under the name",
+      "effect": "Bulleted list of the condition's effects, using \n characters."
+    },
+    "3-4": {
+      "name": "Injury name",
+      "description": "Small description under the name",
+      "effect": "Bulleted list of the condition's effects, using \n characters."
+    },
+    "...": {
+
+    },
+    "20-20": {
+      "name": "Injury name",
+      "description": "Small description under the name",
+      "effect": "Bulleted list of the condition's effects, using \n characters."
+    }
+  }
+}

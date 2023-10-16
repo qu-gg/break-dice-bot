@@ -1,0 +1,12 @@
+{
+  "condition_name (all lowercase)": {
+    "image_url": "Some URL to the image (either local or online).",
+    "description": "The starting paragraph description here.",
+    "effects": "Bulleted list of the condition's effects, using \n characters."
+  },
+  "condition_name2": {
+    "image_url": "Some URL to the image (either local or online).",
+    "description": "The starting paragraph description here.",
+    "effects": "Bulleted list of the condition's effects, using \n characters."
+  }
+}

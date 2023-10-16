@@ -162,3 +162,5 @@ cython_debug/
 /bot_token.py
 /conditions.json
 /gmc_tables.json
+/injury_table.json
+/character_creation.json
