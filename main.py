@@ -420,6 +420,29 @@ async def injury(interaction, injury_type: app_commands.Choice[str]):
     await interaction.response.send_message(f"Rolled {injury_roll} on the {injury_type.title()} Table.", embed=embed)
 
 
+@tree.command(name="burn", description="Command to roll on the Caustic/Burning Injury Table in BREAK!!")
+async def burn(interaction):
+    # Load the json file
+    try:
+        burn_table = json.load(open("burn_caustic_table.json", 'r'))
+    except FileNotFoundError:
+        await interaction.response.send_message("Required file [burn_caustic_table.json] not found!", delete_after=10.0)
+        return
+
+    # Get burn values
+    burn_roll = np.random.randint(1, 20)
+    burn_injury = get_tier(burn_roll, burn_table)
+    burn_name = burn_injury['name']
+    burn_desc = burn_injury['description']
+    burn_effect = burn_injury['effect']
+
+    # Build embed to return
+    embed = (discord.Embed(title=f"{burn_name}", color=0x15dbc7))
+    embed.add_field(name="Description", value=burn_desc, inline=False)
+    embed.add_field(name="Effects", value=burn_effect, inline=False)
+    await interaction.response.send_message(f"Rolled {burn_roll} on the Burning/Caustic Injury Table.", embed=embed)
+
+
 @client.event
 async def on_ready():
     await tree.sync()

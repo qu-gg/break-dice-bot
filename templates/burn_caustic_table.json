@@ -1,0 +1,20 @@
+{
+  "1-5": {
+    "name": "Burn name",
+    "description": "Small description under the name",
+    "effect": "Bulleted list of the condition's effects, using \n characters."
+  },
+
+  "6-15": {
+    "name": "",
+    "description": "",
+    "effect": ""
+  },
+
+  "16-20" :{
+    "name": "",
+    "description": "",
+    "effect": ""
+  }
+}
+
