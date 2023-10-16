@@ -92,6 +92,8 @@ async def attack(interaction, edge: bool=False, snag: bool=False, bonus: int=0):
         rolls['main_roll'] = rolls['secondary_roll']
         rolls['secondary_roll'] = temp_roll
 
+    rolls['main_roll'] = 1
+
     # Build the output iteratively
     return_string = f"```ansi\n" \
 
@@ -107,10 +109,10 @@ async def attack(interaction, edge: bool=False, snag: bool=False, bonus: int=0):
 
     # Check for crit fail or crit success
     if rolls['main_roll'] == 20:
-        return_string += ", [2;34m[2;34m[2;31m[1;31m[1;35mCritical Success![1;35m[0m[1;35m[0m[1;31m[0m[2;31m[0m[2;34m[0m[2;34m[0m"
+        return_string += ", [2;34m[2;34m[2;31m[1;31m[1;35mCritical Success (Nat 20)![1;35m[0m[1;35m[0m[1;31m[0m[2;31m[0m[2;34m[0m[2;34m[0m"
 
     if rolls['main_roll'] == 1:
-        return_string += ", [2;34m[2;34m[2;31mNat 20, Automatic Failure![0m[2;34m[0m[2;34m[0m"
+        return_string += ", [2;34m[2;34m[2;31mAutomatic Failure (Nat 1)![0m[2;34m[0m[2;34m[0m"
 
     # Finish the string and return
     return_string += "\n```"
