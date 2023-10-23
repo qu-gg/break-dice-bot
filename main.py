@@ -289,6 +289,71 @@ async def contest(interaction, player_stat: int=10, opponent_stat: int=10,
     await interaction.response.send_message(return_string)
 
 
+@tree.command(name="player_character", description="Command to roll a player character in BREAK!!.")
+async def pc(interaction):
+    # Load in the character JSON
+    character_json = json.load(open("character_creation.json", 'r'))
+
+    # Roll calling and species
+    calling = get_tier(np.random.randint(1, 20), character_json['calling'])
+    species = get_tier(np.random.randint(1, 20), character_json['species'])
+
+    # Get the homeland and language
+    homeland_roll = 21 if species == "Human, Dimensional Stray" else np.random.randint(1, 20)
+    homeland = get_tier(homeland_roll, character_json['homeland'])
+    homeland_name = homeland['name']
+    language = np.random.choice(homeland['languages'])
+
+    # Roll a history
+    history = get_tier(np.random.randint(1, 20), character_json['histories'][homeland_name])
+
+    # Roll traits, 2 positive and one negative
+    pos_trait_one = get_tier(np.random.randint(1, 20), character_json['traits'])
+    pos_trait_two = get_tier(np.random.randint(1, 20), character_json['traits'])
+    neg_trait = get_tier(np.random.randint(1, 20), character_json['traits'])
+
+    # Each species group has different tables and probabilities to roll on it for quirks
+    if species in ["Gruun", "Chib", "Human, Native", "Human, Dimensional Stray", "Promethean", "Rai-Neko", "Tenebrate"]:
+        table = get_tier(np.random.randint(1, 20), table={
+            "1-7": "spirit",
+            "8-14": "physiology",
+            "15-20": "fate"
+        })
+    elif species in ["Dwarf", "Elf", "Goblin"]:
+        table = get_tier(np.random.randint(1, 20), table={
+            "1-7": "spirit",
+            "8-14": "physiology",
+            "15-20": "eldritch"
+        })
+    else:
+        table = get_tier(np.random.randint(1, 20), table={
+            "1-10": "spirit",
+            "11-20": "robotic"
+        })
+
+    # Roll the quirk
+    quirk = get_tier(np.random.randint(1, 20), character_json['quirks'][table])
+
+    # Build the return string
+    return_string = f"Here's your Player Character!" \
+                    f"```ansi\n" \
+                    f"[1;2mCalling[0m[1;2m[0m: {calling}\n" \
+                    f"[1;2mSpecies[0m[1;2m[0m: {species}\n" \
+                    f"[1;2mHomeland[0m[1;2m[0m: {homeland_name}\n" \
+                    f"[1;2mLanguages[0m[1;2m[0m: Low Tongue, {language}\n" \
+                    f"[1;2mHistory[0m[1;2m[0m: {history}\n" \
+                    f"[1;2mQuirk[0m[1;2m[0m: {quirk}\n" \
+                    f"\n" \
+                    f"[1;2mTraits[0m[1;2m[0m:\n" \
+                    f"\t+1 {pos_trait_one}\n" \
+                    f"\t+1 {pos_trait_two}\n" \
+                    f"\t-1 {neg_trait}\n" \
+                    f"```"
+
+    # Send it
+    await interaction.response.send_message(return_string)
+
+
 @tree.command(name="gmc", description="Command to roll the characteristics of a random GMC on the spot.")
 async def gmc(interaction, villain: bool = False):
     return_string = "```\n"

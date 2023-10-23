@@ -1,0 +1,200 @@
+{
+  "calling": {
+    "1-3": "Factotum",
+    "4-6": "Sneak",
+    "7-9": "Champion",
+    "10-12": "Raider",
+    "13-14": "Battle Princess",
+    "15-16": "Murder Princess",
+    "17-18": "Sage",
+    "19-20": "Heretic"
+  },
+
+  "species": {
+    "1-4": "Human, Native",
+    "5-5": "Human, Dimensional Stray",
+    "6-7": "Chib",
+    "8-10": "Tenebrate",
+    "11-13": "Rai-Neko",
+    "14-15": "Promethean",
+    "16-16": "Gruun",
+    "17-17": "Goblin",
+    "18-18": "Dwarf",
+    "19-19": "Elf",
+    "20-20": "Bio-Mechanoid"
+  },
+
+  "homeland": {
+    "1-5": {
+      "name": "Wistful Dark",
+      "languages": ["High Akenian", "Dark Tongue", "Dream Call"]
+    },
+    "6-10": {
+      "name": "Twilight Meridian",
+      "languages": ["Dark Tongue", "Fade Song", "Gleysian Code"]
+    },
+    "11-15": {
+      "name": "Blazing Garden",
+      "languages": ["Bright Speech", "Hoshi-Ban", "Fade Song"]
+    },
+    "16-20": {
+      "name": "Buried Kingdom",
+      "languages": ["High Akenian", "Under Warble", "Creator's Script"]
+    },
+    "21-21": {
+      "name": "Other World",
+      "languages": ["Other World"]
+    }
+  },
+
+  "histories": {
+    "Wistful Dark": {
+      "1-2": "Forsaken Wanderer",
+      "3-4": "Blight Raider",
+      "5-6": "Shadow Lands Nomad",
+      "7-8": "Murk Dweller",
+      "9-10": "Nightwall Yeoman",
+      "11-12": "Starlight Farmer",
+      "13-14": "Guild Agent",
+      "15-16": "Town Guard",
+      "17-17": "Celebrated Artist",
+      "18-18": "Magia University Graduate",
+      "19-19": "Knight Errant",
+      "20-20": "Shard State Patrician"
+    },
+    "Twilight Meridian": {
+      "1-2": "Disgraced Scion",
+      "3-4": "Shadow Sea Pirate",
+      "5-6": "Orphaned Shinobi",
+      "7-8": "Oldtech Junker",
+      "9-10": "Twilight Silk Tailor",
+      "11-12": "Medicine Peddler",
+      "13-14": "Shining Sea Fisherman",
+      "15-16": "Portian University Graduate",
+      "17-17": "Merchant Scion",
+      "18-18": "Holy Isle Samurai",
+      "19-19": "Archive Researcher",
+      "20-20": "Black Glove Cavalier"
+    },
+    "Blazing Garden": {
+      "1-2": "Kinless Vagrant",
+      "3-4": "Monster Slayer",
+      "5-6": "Street Rat",
+      "7-8": "Thunda Clan Barbarian",
+      "9-10": "Beast Handler",
+      "11-12": "Village Runner",
+      "13-14": "Jubilant Performer",
+      "15-16": "City Scrivener",
+      "17-17": "Emissary of Sol",
+      "18-18": "Wrym Blooded",
+      "19-19": "Hinterland Noble",
+      "20-20": "Startech Adept"
+    },
+    "Buried Kingdom": {
+      "1-2": "Tunnel Crawler",
+      "3-4": "Ruin Scavenger",
+      "5-6": "War Deserter",
+      "7-8": "Moss Scraper",
+      "9-10": "Underland Soldier",
+      "11-12": "Honored Laborer",
+      "13-14": "Forge Hand",
+      "15-16": "Field Sapper",
+      "17-17": "Record Etcher",
+      "18-18": "Comrade Agitator",
+      "19-19": "Resolute Overseer",
+      "20-20": "Apprentice Thinker"
+    },
+    "Other World": {
+      "1-2": "Transient",
+      "3-4": "NEET",
+      "5-6": "Retail/Service",
+      "7-8": "Blue Collar",
+      "9-10": "White Collar",
+      "11-12": "Domestic",
+      "13-14": "Military/Law Enforcement",
+      "15-16": "Education, Faculty",
+      "17-19": "Education, Student",
+      "20": "Idle Rich"
+    }
+  },
+
+  "traits": {
+    "1-4": "Might",
+    "5-8": "Deftness",
+    "9-13": "Grit",
+    "14-16": "Insight",
+    "17-20": "Aura"
+  },
+
+  "quirks": {
+    "spirit": {
+      "1-2": "Unhinged",
+      "3-4": "Jumpy",
+      "5-6": "Pedantic",
+      "7-8": "Clear Intent",
+      "9-10": "Boring",
+      "11-12": "Curious",
+      "13-14": "Always Prepared",
+      "15-16": "Stylish",
+      "17-18": "Miser",
+      "19-20": "Soul Link"
+    },
+    "physiology": {
+      "1-2": "Girthsome",
+      "3-4": "Nearsighted",
+      "5-6": "Adorable",
+      "7-8": "Dark Demeanor",
+      "9-10": "Angelic Countenance",
+      "11-12": "Big Eater",
+      "13-14": "Waifish",
+      "15-16": "Magitech Graft",
+      "17-18": "Winged",
+      "19-20": "Grasping Tresses"
+    },
+    "fate": {
+      "1-2": "Survivor",
+      "3-4": "Mage Breaker",
+      "5-6": "Young",
+      "7-8": "Past Injury",
+      "9-10": "Weary",
+      "11-12": "Destined",
+      "13-14": "Dread Orator",
+      "15-16": "Beast Tongue",
+      "17-18": "Guardian",
+      "19-20": "Crowned"
+    },
+    "eldritch": {
+      "1-2": "Dreamer",
+      "3-4": "Lyrical",
+      "5-6": "Infested",
+      "7-8": "Peculiar Taste",
+      "9-10": "Kin to Fire",
+      "11-12": "Fairy Cap",
+      "13-14": "Sneezles",
+      "15-16": "Masked",
+      "17-18": "Ferrous",
+      "19-20": "Figment Follower"
+    },
+    "robotic": {
+      "1-2": "Industrial Frame",
+      "3-4": "Utility Servo",
+      "5-6": "Sproing Sprockets",
+      "7-8": "Translator Module",
+      "9-10": "Battle Scanner",
+      "11-12": "Buster Arm",
+      "13-14": "Mascot Chassis",
+      "15-16": "Nanotech Maintenance",
+      "17-18": "Bioskin",
+      "19-20": "Nox-Vision"
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
