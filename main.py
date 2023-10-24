@@ -6,11 +6,12 @@ import json
 import discord
 import numpy as np
 
-from battlefield import BattlefieldButtons
 from utils import get_tier
+from bot_token import TOKEN
 from conditions import Buttons
 from discord import app_commands
-from bot_token import TOKEN
+from random_tables import RandomTables
+from battlefield import BattlefieldButtons
 
 # Define Discord intents and client
 intents = discord.Intents.default()
@@ -289,140 +290,8 @@ async def contest(interaction, player_stat: int=10, opponent_stat: int=10,
     await interaction.response.send_message(return_string)
 
 
-@tree.command(name="player_character", description="Command to roll a player character in BREAK!!.")
-async def pc(interaction):
-    # Load in the character JSON
-    character_json = json.load(open("character_creation.json", 'r'))
-
-    # Roll calling and species
-    calling = get_tier(np.random.randint(1, 20), character_json['calling'])
-    species = get_tier(np.random.randint(1, 20), character_json['species'])
-
-    # Get the homeland and language
-    homeland_roll = 21 if species == "Human, Dimensional Stray" else np.random.randint(1, 20)
-    homeland = get_tier(homeland_roll, character_json['homeland'])
-    homeland_name = homeland['name']
-    language = np.random.choice(homeland['languages'])
-
-    # Roll a history
-    history = get_tier(np.random.randint(1, 20), character_json['histories'][homeland_name])
-
-    # Roll traits, 2 positive and one negative
-    pos_trait_one = get_tier(np.random.randint(1, 20), character_json['traits'])
-    pos_trait_two = get_tier(np.random.randint(1, 20), character_json['traits'])
-    neg_trait = get_tier(np.random.randint(1, 20), character_json['traits'])
-
-    # Each species group has different tables and probabilities to roll on it for quirks
-    if species in ["Gruun", "Chib", "Human, Native", "Human, Dimensional Stray", "Promethean", "Rai-Neko", "Tenebrate"]:
-        table = get_tier(np.random.randint(1, 20), table={
-            "1-7": "spirit",
-            "8-14": "physiology",
-            "15-20": "fate"
-        })
-    elif species in ["Dwarf", "Elf", "Goblin"]:
-        table = get_tier(np.random.randint(1, 20), table={
-            "1-7": "spirit",
-            "8-14": "physiology",
-            "15-20": "eldritch"
-        })
-    else:
-        table = get_tier(np.random.randint(1, 20), table={
-            "1-10": "spirit",
-            "11-20": "robotic"
-        })
-
-    # Roll the quirk
-    quirk = get_tier(np.random.randint(1, 20), character_json['quirks'][table])
-
-    # Build the return string
-    return_string = f"Here's your Player Character!" \
-                    f"```ansi\n" \
-                    f"[1;2mCalling[0m[1;2m[0m: {calling}\n" \
-                    f"[1;2mSpecies[0m[1;2m[0m: {species}\n" \
-                    f"[1;2mHomeland[0m[1;2m[0m: {homeland_name}\n" \
-                    f"[1;2mLanguages[0m[1;2m[0m: Low Tongue, {language}\n" \
-                    f"[1;2mHistory[0m[1;2m[0m: {history}\n" \
-                    f"[1;2mQuirk[0m[1;2m[0m: {quirk}\n" \
-                    f"\n" \
-                    f"[1;2mTraits[0m[1;2m[0m:\n" \
-                    f"\t+1 {pos_trait_one}\n" \
-                    f"\t+1 {pos_trait_two}\n" \
-                    f"\t-1 {neg_trait}\n" \
-                    f"```"
-
-    # Send it
-    await interaction.response.send_message(return_string)
-
-
-@tree.command(name="gmc", description="Command to roll the characteristics of a random GMC on the spot.")
-async def gmc(interaction, villain: bool = False):
-    return_string = "```\n"
-
-    # Load in data tables
-    try:
-        gmc_table = json.load(open("gmc_tables.json", 'r'))
-    except FileNotFoundError as e:
-        await interaction.response.send_message("Required file [gmc_tables.json] not found!", delete_after=10.0)
-        return
-
-    # If a villain, roll a motivation
-    if villain is True:
-        motivation = get_tier(np.random.randint(1, 20), gmc_table['villain_motivation'])
-        return_string += f"{'Villain Motivation:':25}{motivation}\n"
-
-    # Roll for minor quirk
-    quirk = gmc_table['quirk'][str(np.random.randint(1, 20))]
-    return_string += f"{'Minor Quirk:':25}{quirk}\n"
-
-    # Roll for profession
-    profession = get_tier(np.random.randint(1, 20), gmc_table['profession'])
-    profession_adj = get_tier(np.random.randint(1, 20), gmc_table['profession_adj'])
-    return_string += f"{'Profession:':25}{profession_adj} {profession}\n"
-
-    # Roll for Clothing Color
-    clothing_color = get_tier(np.random.randint(1, 20), gmc_table['clothing_color'])
-    return_string += f"{'Clothing Color:':25}{clothing_color}\n"
-
-    # Roll for Prominent Accessory
-    accessory = get_tier(np.random.randint(1, 20), gmc_table['prominent_accessory'])
-    return_string += f"{'Prominent Accessory:':25}{accessory}\n"
-
-    # Return formatted message
-    return_string += "```"
-    await interaction.response.send_message(return_string)
-
-
-@tree.command(name="bg_chars", description="Command to roll the characteristics of a group of background characters.")
-async def bg_chars(interaction, num_characters: int = 1, roll_separate: bool = False):
-    return_string = "```\n"
-
-    # Load in data tables
-    try:
-        gmc_table = json.load(open("gmc_tables.json", 'r'))
-    except FileNotFoundError as e:
-        await interaction.response.send_message("Required file [gmc_tables.json] not found!", delete_after=10.0)
-        return
-
-    # If rolling together, just roll once and return
-    if roll_separate is False:
-        bg_adjective = get_tier(np.random.randint(1, 20), gmc_table['background_character'])[0]
-        bg_appearance = get_tier(np.random.randint(1, 20), gmc_table['background_character'])[1]
-        return_string += f"There is a group of {num_characters} people that are {bg_adjective} and {bg_appearance}\n```"
-        await interaction.response.send_message(return_string)
-
-    # Roll for separate characters
-    else:
-        for i in range(num_characters):
-            bg_adjective = get_tier(np.random.randint(1, 20), gmc_table['background_character'])[0]
-            bg_appearance = get_tier(np.random.randint(1, 20), gmc_table['background_character'])[1]
-            return_string += f"Character #{i:04d}: {bg_adjective} & {bg_appearance}\n"
-
-        return_string += "```"
-        await interaction.response.send_message(return_string)
-
-
 @tree.command(name="condition", description="Interactive command to display what all the conditions in BREAK!! do.")
-async def condition_string(interaction):
+async def condition(interaction):
     # Generic response to acknowledge connection
     return_string = "List of available conditions in BREAK!!"
 
@@ -437,7 +306,7 @@ async def condition_string(interaction):
 
 
 @tree.command(name="battlefield", description="Interactive command to display what all the conditions in BREAK!! do.")
-async def condition_string(interaction):
+async def battlefield(interaction):
     # Generic response to acknowledge connection
     return_string = "List of available battlefield conditions in BREAK!!"
 
@@ -478,7 +347,6 @@ async def injury(interaction, injury_type: app_commands.Choice[str]):
     injury_effect = injury_dict['effect']
 
     # Build embed to return
-    # TODO add image urls here
     embed = (discord.Embed(title=f"{injury_name}", color=0x15dbc7))
     embed.add_field(name="Description", value=injury_desc, inline=False)
     embed.add_field(name="Effects", value=injury_effect, inline=False)
@@ -506,6 +374,26 @@ async def burn(interaction):
     embed.add_field(name="Description", value=burn_desc, inline=False)
     embed.add_field(name="Effects", value=burn_effect, inline=False)
     await interaction.response.send_message(f"Rolled {burn_roll} on the Burning/Caustic Injury Table.", embed=embed)
+
+
+@tree.command(name="table", description="Command to roll on a given random table in BREAK!!")
+@app_commands.choices(table_name=[
+        app_commands.Choice(name="Player Character", value="pc"),
+        app_commands.Choice(name="Game Master Character", value="gmc"),
+        app_commands.Choice(name="Individual Background Characters", value="bg_indiv"),
+        app_commands.Choice(name="Bulk Background Characters", value="bg_bulk"),
+    ])
+async def table_roll(interaction, table_name: app_commands.Choice[str]):
+    # Instantiate the table
+    try:
+        table = RandomTables(table_name.value)
+    except FileNotFoundError as e:
+        await interaction.response.send_message("Required JSON file not found!", delete_after=10.0)
+        return
+
+    # Roll on the table and return its output
+    return_string = table.roll_on_table()
+    await interaction.response.send_message(return_string)
 
 
 @client.event
