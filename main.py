@@ -33,8 +33,8 @@ def get_dice_roll(edge: bool=False, snag: bool=False):
     }
 
     # Make two rolls always
-    roll_one = np.random.randint(1, 20)
-    roll_two = np.random.randint(1, 20)
+    roll_one = np.random.randint(1, 21)
+    roll_two = np.random.randint(1, 21)
 
     # Regular roll if no edge/snag or both edge/snag
     if (edge is False and snag is False) or (edge is True and snag is True):
@@ -69,14 +69,24 @@ def get_roll_string(rolls, edge, snag):
 
 
 @tree.command(name="roll", description="Command to roll a roll in BREAK!!")
-async def roll(interaction, edge: bool=False, snag: bool=False):
+@app_commands.choices(dice_size=[
+        app_commands.Choice(name="d2", value=2),
+        app_commands.Choice(name="d4", value=4),
+        app_commands.Choice(name="d6", value=6),
+        app_commands.Choice(name="d8", value=8),
+        app_commands.Choice(name="d10", value=10),
+        app_commands.Choice(name="d12", value=12),
+        app_commands.Choice(name="d20", value=20),
+        app_commands.Choice(name="d100", value=100),
+    ])
+async def roll(interaction, dice_size: app_commands.Choice[int], count: int=1):
     # Get the rolls
-    rolls = get_dice_roll(edge, snag)
+    rolls = np.random.randint(low=1, high=dice_size.value + 1, size=count)
 
     # Build the output
-    return_string = f"```ansi\n" \
-                    f"{get_roll_string(rolls, edge, snag)}\n" \
-                    f"```" \
+    return_string = f"You rolled {rolls[0]}"
+    if len(rolls) > 1:
+        return_string += "".join([f", {i}" for i in rolls[1:]])
 
     # Finish up string and send it back
     await interaction.response.send_message(return_string)
@@ -119,13 +129,17 @@ async def attack(interaction, edge: bool=False, snag: bool=False, bonus: int=0):
 
 
 @tree.command(name="check", description="Command to roll a regular BREAK!! check, rolling under a given stat.")
-async def check(interaction, stat: int=10, edge: bool=False, snag: bool=False, bonus: int=0):
+async def check(interaction, stat: int=10, edge: bool=False, snag: bool=False, bonus: int=0, penalty: int=0):
     # Get the rolls
     rolls = get_dice_roll(edge, snag)
 
+    # Ensure bonus and penalty are positive respectively
+    bonus = abs(bonus)
+    penalty = abs(penalty)
+
     # Check against stat
     result_string = f"[2;34m[2;34m[2;31mFailure![0m[2;34m[0m[2;34m[0m"
-    if rolls['main_roll'] - bonus <= stat:
+    if rolls['main_roll'] - bonus + penalty <= stat:
         result_string = f"[2;34m[2;34mSuccess![0m[2;34m[0m"
 
     if rolls['main_roll'] == stat or (rolls['secondary_roll'] == stat and edge is True and snag is False):
@@ -141,12 +155,15 @@ async def check(interaction, stat: int=10, edge: bool=False, snag: bool=False, b
     # Then add the roll, noting the edge or snag
     return_string += get_roll_string(rolls, edge, snag)
 
-    # If a bonus was applied or not
+    # If a bonus/penalty was applied or not
     if bonus != 0:
         return_string += f"Bonus: {bonus}\n"
 
+    if penalty != 0:
+        return_string += f"Penalty: {penalty}\n"
+
     # Finish up string and send it back
-    return_string += f"Result: ({rolls['main_roll'] - bonus}/{stat}) {result_string}\n```"
+    return_string += f"Result: ({rolls['main_roll'] - bonus + penalty}/{stat}) {result_string}\n```"
     await interaction.response.send_message(return_string)
 
 
@@ -154,14 +171,18 @@ async def check(interaction, stat: int=10, edge: bool=False, snag: bool=False, b
 async def contest(interaction, player_stat: int=10, opponent_stat: int=10,
                   player_edge: bool=False, opponent_edge: bool=False,
                   player_snag: bool=False, opponent_snag: bool=False,
-                  player_bonus: int=0, opponent_bonus: int=0):
+                  player_bonus: int=0, opponent_bonus: int=0,
+                  player_penalty: int=0, opponent_penalty: int=0):
     """ Player Rolls """
     player_rolls = get_dice_roll(player_edge, player_snag)
+
+    # Ensure player bonus/penalty are positive
+    player_bonus, player_penalty = abs(player_bonus), abs(player_penalty)
 
     # Check for player success
     player_success = False
     player_success_string = "[2;34m[2;34m[2;31mFailure![0m[2;34m[0m[2;34m[0m"
-    if player_rolls['main_roll'] - player_bonus <= player_stat:
+    if player_rolls['main_roll'] - player_bonus + player_penalty <= player_stat:
         player_success = True
         player_success_string = f"[2;34m[2;34mSuccess![0m[2;34m[0m"
 
@@ -180,10 +201,13 @@ async def contest(interaction, player_stat: int=10, opponent_stat: int=10,
     """ Opponent Rolls """
     opponent_rolls = get_dice_roll(opponent_edge, opponent_snag)
 
+    # Ensure player bonus/penalty are positive
+    opponent_bonus, opponent_penalty = abs(opponent_bonus), abs(opponent_penalty)
+
     # Check for opponent success
     opponent_success = False
     opponent_success_string = "[2;34m[2;34m[2;31mFailure![0m[2;34m[0m[2;34m[0m"
-    if opponent_rolls['main_roll'] - opponent_bonus <= opponent_stat:
+    if opponent_rolls['main_roll'] - opponent_bonus + opponent_penalty <= opponent_stat:
         opponent_success = True
         opponent_success_string = f"[2;34m[2;34mSuccess![0m[2;34m[0m"
 
@@ -210,7 +234,10 @@ async def contest(interaction, player_stat: int=10, opponent_stat: int=10,
     if player_bonus != 0:
         return_string += f"Bonus: {player_bonus}\n"
 
-    return_string += f"Result: ({player_rolls['main_roll'] - player_bonus}/{player_stat}) {player_success_string}\n"
+    if player_penalty != 0:
+        return_string += f"Penalty: {player_penalty}\n"
+
+    return_string += f"Result: ({player_rolls['main_roll'] - player_bonus + player_penalty}/{player_stat}) {player_success_string}\n"
     return_string += f"\n"
 
     # Opponent stats/rolls
@@ -221,7 +248,10 @@ async def contest(interaction, player_stat: int=10, opponent_stat: int=10,
     if opponent_bonus != 0:
         return_string += f"Bonus: {opponent_bonus}\n"
 
-    return_string += f"Result: ({opponent_rolls['main_roll'] - opponent_bonus}/{opponent_stat}) {opponent_success_string}\n"
+    if opponent_penalty != 0:
+        return_string += f"Penalty: {opponent_penalty}\n"
+
+    return_string += f"Result: ({opponent_rolls['main_roll'] - opponent_bonus + opponent_penalty}/{opponent_stat}) {opponent_success_string}\n"
     return_string += f"\n"
 
     """ Win Condition Checks """
@@ -268,11 +298,11 @@ async def contest(interaction, player_stat: int=10, opponent_stat: int=10,
         return_string += f"[2;34m[2;34m[2;31mOpponent Success by Larger Bonus![0m[2;34m[0m[2;34m[0m\n```"
 
     # Both succeed/fail, player has less penalty
-    elif ((player_success is True and opponent_success is True) or (player_success is False and opponent_success is False)) and player_bonus >= 0 and opponent_bonus < 0:
+    elif ((player_success is True and opponent_success is True) or (player_success is False and opponent_success is False)) and player_penalty < opponent_penalty:
         return_string += f"[2;34m[2;34mPlayer Success by Least Penalty![0m[2;34m[0m\n```"
 
     # Both succeed/fail, opponent has less penalty
-    elif ((player_success is True and opponent_success is True) or (player_success is False and opponent_success is False)) and player_bonus < 0 and opponent_bonus >= 0:
+    elif ((player_success is True and opponent_success is True) or (player_success is False and opponent_success is False)) and opponent_penalty < player_penalty:
         return_string += f"[2;34m[2;34m[2;31mOpponent Success by Least Penalty![0m[2;34m[0m[2;34m[0m\n```"
 
     # Both succeed/fail, player has the best natural roll
@@ -338,7 +368,7 @@ async def injury(interaction, injury_type: app_commands.Choice[str]):
         return
 
     # Roll the tier
-    injury_roll = np.random.randint(1, 20)
+    injury_roll = np.random.randint(1, 21)
 
     # Get condition values
     injury_dict = get_tier(injury_roll, injury_table[injury_type])
@@ -363,7 +393,7 @@ async def burn(interaction):
         return
 
     # Get burn values
-    burn_roll = np.random.randint(1, 20)
+    burn_roll = np.random.randint(1, 21)
     burn_injury = get_tier(burn_roll, burn_table)
     burn_name = burn_injury['name']
     burn_desc = burn_injury['description']
@@ -374,6 +404,31 @@ async def burn(interaction):
     embed.add_field(name="Description", value=burn_desc, inline=False)
     embed.add_field(name="Effects", value=burn_effect, inline=False)
     await interaction.response.send_message(f"Rolled {burn_roll} on the Burning/Caustic Injury Table.", embed=embed)
+
+
+@tree.command(name="lost", description="Command to roll on the Lost Table in BREAK!!")
+async def lost(interaction):
+    # Load the json file
+    try:
+        lost_table = json.load(open("lost_table.json", 'r'))
+    except FileNotFoundError:
+        await interaction.response.send_message("Required file [lost_table.json] not found!", delete_after=10.0)
+        return
+
+    # Get lost values
+    lost_roll = np.random.randint(1, 21)
+    lost_injury = get_tier(lost_roll, lost_table)
+    lost_name = lost_injury['name']
+    lost_desc = lost_injury['description']
+    lost_effect = lost_injury['effect']
+    lost_url = lost_injury['url']
+
+    # Build embed to return
+    embed = (discord.Embed(title=f"{lost_name}", color=0x15dbc7))
+    embed.add_field(name="Description", value=lost_desc, inline=False)
+    embed.add_field(name="Effects", value=lost_effect, inline=False)
+    embed.set_thumbnail(url=lost_url)
+    await interaction.response.send_message(f"Rolled {lost_roll} on the Lost Table.", embed=embed)
 
 
 @tree.command(name="table", description="Command to roll on a given random table in BREAK!!")

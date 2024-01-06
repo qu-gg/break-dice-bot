@@ -40,45 +40,45 @@ class RandomTables:
         :return: formatted string
         """
         # Roll calling and species
-        calling = get_tier(np.random.randint(1, 20), self.table['calling'])
-        species = get_tier(np.random.randint(1, 20), self.table['species'])
+        calling = get_tier(np.random.randint(1, 21), self.table['calling'])
+        species = get_tier(np.random.randint(1, 21), self.table['species'])
 
         # Get the homeland and language
-        homeland_roll = 21 if species == "Human, Dimensional Stray" else np.random.randint(1, 20)
+        homeland_roll = 21 if species == "Human, Dimensional Stray" else np.random.randint(1, 21)
         homeland = get_tier(homeland_roll, self.table['homeland'])
         homeland_name = homeland['name']
         language = np.random.choice(homeland['languages'])
 
         # Roll a history
-        history = get_tier(np.random.randint(1, 20), self.table['histories'][homeland_name])
+        history = get_tier(np.random.randint(1, 21), self.table['histories'][homeland_name])
 
         # Roll traits, 2 positive and one negative
-        pos_trait_one = get_tier(np.random.randint(1, 20), self.table['traits'])
-        pos_trait_two = get_tier(np.random.randint(1, 20), self.table['traits'])
-        neg_trait = get_tier(np.random.randint(1, 20), self.table['traits'])
+        pos_trait_one = get_tier(np.random.randint(1, 21), self.table['traits'])
+        pos_trait_two = get_tier(np.random.randint(1, 21), self.table['traits'])
+        neg_trait = get_tier(np.random.randint(1, 21), self.table['traits'])
 
         # Each species group has different tables and probabilities to roll on it for quirks
         if species in ["Gruun", "Chib", "Human, Native", "Human, Dimensional Stray", "Promethean", "Rai-Neko",
                        "Tenebrate"]:
-            table = get_tier(np.random.randint(1, 20), table={
+            table = get_tier(np.random.randint(1, 21), table={
                 "1-7": "spirit",
                 "8-14": "physiology",
                 "15-20": "fate"
             })
         elif species in ["Dwarf", "Elf", "Goblin"]:
-            table = get_tier(np.random.randint(1, 20), table={
+            table = get_tier(np.random.randint(1, 21), table={
                 "1-7": "spirit",
                 "8-14": "physiology",
                 "15-20": "eldritch"
             })
         else:
-            table = get_tier(np.random.randint(1, 20), table={
+            table = get_tier(np.random.randint(1, 21), table={
                 "1-10": "spirit",
                 "11-20": "robotic"
             })
 
         # Roll the quirk
-        quirk = get_tier(np.random.randint(1, 20), self.table['quirks'][table])
+        quirk = get_tier(np.random.randint(1, 21), self.table['quirks'][table])
 
         # Build the return string
         return_string = f"Here's your Player Character!" \
@@ -106,24 +106,24 @@ class RandomTables:
         return_string = "```\n"
 
         # Always give back a villain motivation
-        motivation = get_tier(np.random.randint(1, 20), self.table['villain_motivation'])
+        motivation = get_tier(np.random.randint(1, 21), self.table['villain_motivation'])
         return_string += f"{'Villain Motivation:':25}{motivation}\n"
 
         # Roll for minor quirk
-        quirk = self.table['quirk'][str(np.random.randint(1, 20))]
+        quirk = self.table['quirk'][str(np.random.randint(1, 21))]
         return_string += f"{'Minor Quirk:':25}{quirk}\n"
 
         # Roll for profession
-        profession = get_tier(np.random.randint(1, 20), self.table['profession'])
-        profession_adj = get_tier(np.random.randint(1, 20), self.table['profession_adj'])
+        profession = get_tier(np.random.randint(1, 21), self.table['profession'])
+        profession_adj = get_tier(np.random.randint(1, 21), self.table['profession_adj'])
         return_string += f"{'Profession:':25}{profession_adj} {profession}\n"
 
         # Roll for Clothing Color
-        clothing_color = get_tier(np.random.randint(1, 20), self.table['clothing_color'])
+        clothing_color = get_tier(np.random.randint(1, 21), self.table['clothing_color'])
         return_string += f"{'Clothing Color:':25}{clothing_color}\n"
 
         # Roll for Prominent Accessory
-        accessory = get_tier(np.random.randint(1, 20), self.table['prominent_accessory'])
+        accessory = get_tier(np.random.randint(1, 21), self.table['prominent_accessory'])
         return_string += f"{'Prominent Accessory:':25}{accessory}\n"
 
         # Return formatted message
@@ -142,8 +142,8 @@ class RandomTables:
 
         # For each character, roll it and add to the return string
         for i in range(num_characters):
-            bg_adjective = get_tier(np.random.randint(1, 20), self.table['background_character'])[0]
-            bg_appearance = get_tier(np.random.randint(1, 20), self.table['background_character'])[1]
+            bg_adjective = get_tier(np.random.randint(1, 21), self.table['background_character'])[0]
+            bg_appearance = get_tier(np.random.randint(1, 21), self.table['background_character'])[1]
             return_string += f"Character #{i:02d}: {bg_adjective:>15} & {bg_appearance:>15}\n"
 
         # Build and return it
@@ -161,8 +161,8 @@ class RandomTables:
         num_characters = np.random.randint(2, 6)
 
         # Roll for the characters and return the string
-        bg_adjective = get_tier(np.random.randint(1, 20), self.table['background_character'])[0]
-        bg_appearance = get_tier(np.random.randint(1, 20), self.table['background_character'])[1]
+        bg_adjective = get_tier(np.random.randint(1, 21), self.table['background_character'])[0]
+        bg_appearance = get_tier(np.random.randint(1, 21), self.table['background_character'])[1]
         return_string += f"There is a group of {num_characters} people that are {bg_adjective} and {bg_appearance}\n```"
         return return_string
 
