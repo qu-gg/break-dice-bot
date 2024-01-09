@@ -12,6 +12,7 @@ from conditions import Buttons
 from discord import app_commands
 from random_tables import RandomTables
 from battlefield import BattlefieldButtons
+from generatebattlefield import GenerateImage
 
 # Define Discord intents and client
 intents = discord.Intents.default()
@@ -449,6 +450,17 @@ async def table_roll(interaction, table_name: app_commands.Choice[str]):
     # Roll on the table and return its output
     return_string = table.roll_on_table()
     await interaction.response.send_message(return_string)
+
+
+@tree.command(name="generate", description="Generate a random battlefield!")
+async def generate_battlefield(interaction):
+    # Get image IO stream
+    im = GenerateImage()
+    # Package into discord file object
+    chart = discord.File(im, filename="battlefield.jpg")
+    # Send
+    await interaction.response.send_message(file=chart)
+
 
 
 @client.event
