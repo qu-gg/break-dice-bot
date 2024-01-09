@@ -453,9 +453,9 @@ async def table_roll(interaction, table_name: app_commands.Choice[str]):
 
 
 @tree.command(name="generate", description="Generate a random battlefield!")
-async def generate_battlefield(interaction):
+async def generate_battlefield(interaction, complexity: int=1):
     # Get image IO stream
-    im = GenerateImage()
+    im = GenerateImage(250, complexity)
     # Package into discord file object
     chart = discord.File(im, filename="battlefield.jpg")
     # Send
