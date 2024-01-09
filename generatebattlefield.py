@@ -12,12 +12,15 @@ biomes = {
     'OBSCURED': (229, 230, 207),
     'PRECARIOUS': (136, 207, 112),
     'SHELTERED': (221, 224, 162),
-    'SUFFOCATING': (54, 196, 6)
+    'SUFFOCATING': (54, 196, 6),
+    'NEUTRAL': (187, 187, 187)
 }
 
 # Transform noise values to actual pixel values
 def GetPixelValue(danger, elevation, space):
-    if(elevation > 0.9):
+    if(danger < 0.5):
+        return 'NEUTRAL'
+    elif(elevation > 0.9):
         return 'ISOLATED'
     else:
         if(space < 0.1):
@@ -25,11 +28,11 @@ def GetPixelValue(danger, elevation, space):
         elif(space < 0.4):
             return 'SHELTERED'
         else:
-            if(danger < 0.1):
+            if(danger < 0.6):
                 return 'OBSCURED'
-            elif(danger < 0.3):
+            elif(danger < 0.7):
                 return 'PRECARIOUS'
-            elif(danger < 0.6):
+            elif(danger < 0.8):
                 return 'SUFFOCATING'
             else:
                 return 'HARMFUL'
