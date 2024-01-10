@@ -18,8 +18,8 @@ biomes = {
     'OBSCURED': (229, 230, 207),
     'PRECARIOUS': (136, 207, 112),
     'SHELTERED': (221, 224, 162),
-    'SUFFOCATING': (54, 196, 6),
-    'NEUTRAL': (187, 187, 187)
+    'SUFFOCATING': (187, 187, 187),
+    'NEUTRAL': (54, 196, 6)
 }
 
 defaultConditions = {
@@ -36,43 +36,54 @@ defaultConditions = {
 
 # Transform noise values to actual pixel values
 def GetPixelValue(danger, elevation, space, conditions):
-    if(danger < 0.5):
-        if(not conditions['Neutral']):
-            danger = 0.5
-        else:
-            return 'NEUTRAL'
-    if(elevation > 0.9):
-        if(not conditions['Isolated']):
-            elevation = 0.9
-        else:
-            return 'ISOLATED'
+    # Define default thresholds
+    neutralThreshold = 0.5
+    isolatedThreshold = 0.9
+    crampedThreshold = 0.1
+    shelteredThreshold = 0.4
+    obscuredThreshold = 0.6
+    precariousThreshold = 0.7
+    suffocatingThreshold = 0.8
+    harmfulThreshold = 0.8
+    # Adjust based on conditions dict
+    if(not conditions['Neutral']):
+        neutralThreshold = 0
+    if(not conditions['Isolated']):
+        isolatedThreshold = 1.1
+    if(not conditions['Cramped']):
+        crampedThreshold = 0
+    if(not conditions['Sheltered']):
+        shelteredThreshold = 0
+    if(not conditions['Obscured']):
+        obscuredThreshold = 0
+    if(not conditions['Precarious']):
+        precariousThreshold = 0
+    if(not conditions['Suffocating']):
+        suffocatingThreshold = 0
+    if(not conditions['Harmful']):
+        harmfulThreshold = 1.1
+
+    if(danger < neutralThreshold):
+        return 'NEUTRAL'
+    if(elevation > isolatedThreshold):
+        return 'ISOLATED'
     else:
-        if(conditions['Cramped']):
-            if(space < 0.1):
-                return 'CRAMPED'
-        else:
-            space = 0.1
-        if(conditions['Sheltered']):
-            if(space < 0.4):
-                return 'SHELTERED'
-        else:
-            space = 0.4
-        if(conditions['Obscured']):
-            if(danger < 0.6):
-                return 'OBSCURED'
-        if(conditions['Precarious']):
-            if(danger < 0.7):
-                return 'PRECARIOUS'
-        if(conditions['Suffocating']):
-            if(danger < 0.8):
-                return 'SUFFOCATING'
-        if(conditions['Harmful']):
-            if(danger > 0.8):
-                return 'HARMFUL'
+        if(space < crampedThreshold):
+            return 'CRAMPED'
+        elif(space < shelteredThreshold):
+            return 'SHELTERED'
+        if(danger < obscuredThreshold):
+            return 'OBSCURED'
+        elif(danger < precariousThreshold):
+            return 'PRECARIOUS'
+        elif(danger < suffocatingThreshold):
+            return 'SUFFOCATING'
+        elif(danger > harmfulThreshold):
+            return 'HARMFUL'
     return 'NEUTRAL'
 
 
-def GenerateBattlefield(dimension=250, complexity=1, conditions=defaultConditions):
+def GenerateBattlefield(dimension=250, complexity=1, conditions=defaultConditions, extraDanger=0):
     """ Generate noise maps and combine them into RGB pixel map """
     # Generate noise maps
     # Octaves increase complexity/granularity, i.e. higher octaves make busier maps with more areas
@@ -81,7 +92,7 @@ def GenerateBattlefield(dimension=250, complexity=1, conditions=defaultCondition
     spaceNoise = PerlinNoise(octaves=complexity)
 
     # Convert generators to arrays
-    dangerMap = np.array([np.array([dangerNoise([i/dimension, j/dimension])+0.5 for j in range(dimension)]) for i in range(dimension)])
+    dangerMap = np.array([np.array([dangerNoise([i/dimension, j/dimension])+0.5+extraDanger for j in range(dimension)]) for i in range(dimension)])
     elevationMap = np.array([np.array([elevationNoise([i/dimension, j/dimension])+0.5 for j in range(dimension)]) for i in range(dimension)])
     spaceMap = np.array([np.array([spaceNoise([i/dimension, j/dimension])+0.5 for j in range(dimension)]) for i in range(dimension)])
 
@@ -90,10 +101,10 @@ def GenerateBattlefield(dimension=250, complexity=1, conditions=defaultCondition
     return myMap
 
 
-def GenerateImage(dimension=250, complexity=1, conditions=defaultConditions):
+def GenerateImage(dimension=250, complexity=1, conditions=defaultConditions, extraDanger=0):
     """ Generate an RGB pixel map and convert to an IO stream for Discord """
     # Generate map
-    battlefieldMap = GenerateBattlefield(dimension, complexity, conditions)
+    battlefieldMap = GenerateBattlefield(dimension, complexity, conditions, extraDanger)
 
     # Convert map to Image object
     # NOTE: .astype('uint8') is required or else the pixels get all garbled
@@ -141,6 +152,7 @@ class GenerateBattlefieldButtons(discord.ui.View):
 
         self.dimension = dimension
         self.complexity = complexity
+        self.danger = 0
 
     def reset_button_style(self):
         # Set all button colors
@@ -214,8 +226,20 @@ class GenerateBattlefieldButtons(discord.ui.View):
 
         # Do a deferred interaction during image generation to prevent timeout
         await interaction.response.defer()
-        image = GenerateImage(self.dimension, self.complexity, self.conditions)
+        image = GenerateImage(self.dimension, self.complexity, self.conditions, self.danger)
         asyncio.sleep(self.dimension // 100)
 
         # Edit the message with the new battlefield
         await interaction.followup.edit_message(message_id=interaction.message.id, attachments=[discord.File(image, 'battlefield.jpg')], view=self)
+    
+    @discord.ui.button(label="Increase Danger", style=discord.ButtonStyle.gray, row=3)
+    async def increasedanger(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # Increment danger for map
+        self.danger += 0.1
+        await interaction.response.edit_message(view=self, content=f'Extra danger level: {self.danger:.1f}')
+
+    @discord.ui.button(label="Decrease Danger", style=discord.ButtonStyle.gray, row=3)
+    async def decreasedanger(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # Decrement danger for map
+        self.danger -= 0.1
+        await interaction.response.edit_message(view=self, content=f'Extra danger level: {self.danger:.1f}')
