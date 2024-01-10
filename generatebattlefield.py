@@ -2,6 +2,7 @@ from perlin_noise import PerlinNoise
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 import io
+import discord
 
 
 # Define RGB codes for the different area types
@@ -16,28 +17,56 @@ biomes = {
     'NEUTRAL': (187, 187, 187)
 }
 
+defaultConditions = {
+    'Cramped': True,
+    'Harmful': True,
+    'Isolated': True,
+    'Obscured': True,
+    'Precarious': True,
+    'Sheltered': True,
+    'Suffocating': True,
+    'Neutral': True
+}
+
+
 # Transform noise values to actual pixel values
-def GetPixelValue(danger, elevation, space):
+def GetPixelValue(danger, elevation, space, conditions):
     if(danger < 0.5):
-        return 'NEUTRAL'
-    elif(elevation > 0.9):
-        return 'ISOLATED'
-    else:
-        if(space < 0.1):
-            return 'CRAMPED'
-        elif(space < 0.4):
-            return 'SHELTERED'
+        if(not conditions['Neutral']):
+            danger = 0.5
         else:
+            return 'NEUTRAL'
+    if(elevation > 0.9):
+        if(not conditions['Isolated']):
+            elevation = 0.9
+        else:
+            return 'ISOLATED'
+    else:
+        if(conditions['Cramped']):
+            if(space < 0.1):
+                return 'CRAMPED'
+        else:
+            space = 0.1
+        if(conditions['Sheltered']):
+            if(space < 0.4):
+                return 'SHELTERED'
+        else:
+            space = 0.4
+        if(conditions['Obscured']):
             if(danger < 0.6):
                 return 'OBSCURED'
-            elif(danger < 0.7):
+        if(conditions['Precarious']):
+            if(danger < 0.7):
                 return 'PRECARIOUS'
-            elif(danger < 0.8):
+        if(conditions['Suffocating']):
+            if(danger < 0.8):
                 return 'SUFFOCATING'
-            else:
+        if(conditions['Harmful']):
+            if(danger > 0.8):
                 return 'HARMFUL'
+    return 'NEUTRAL'
             
-def GenerateBattlefield(dimension=250, complexity=1):
+def GenerateBattlefield(dimension=250, complexity=1, conditions=defaultConditions):
     '''Generate noise maps and combine them into RGB pixel map
     '''
 
@@ -57,15 +86,15 @@ def GenerateBattlefield(dimension=250, complexity=1):
     spaceMap = np.array([np.array([spaceNoise([i/dimension, j/dimension])+0.5 for j in range(dimension)]) for i in range(dimension)])
 
     # Convert arrays of noise to array of pixel values in RGB space
-    myMap = np.array([np.array([biomes[GetPixelValue(dangerMap[i][j], elevationMap[i][j], spaceMap[i][j])] for j in range(dimension)]) for i in range(dimension)])
+    myMap = np.array([np.array([biomes[GetPixelValue(dangerMap[i][j], elevationMap[i][j], spaceMap[i][j], conditions)] for j in range(dimension)]) for i in range(dimension)])
 
     return myMap
 
 
-def GenerateImage(dimension=250, complexity=1):
+def GenerateImage(dimension=250, complexity=1, conditions=defaultConditions):
     '''Generate an RGB pixel map and convert to an IO stream for Discord'''
     # Generate map
-    battlefieldMap = GenerateBattlefield(dimension, complexity)
+    battlefieldMap = GenerateBattlefield(dimension, complexity, conditions)
     # Convert map to Image object
     # NOTE: .astype('uint8') is required or else the pixels get all garbled
     mapIm = Image.fromarray(battlefieldMap.astype('uint8'), mode="RGB")
@@ -91,3 +120,91 @@ def GenerateImage(dimension=250, complexity=1):
 
     return data_stream
 
+class GenerateBattlefieldButtons(discord.ui.View):
+    def __init__(self, *, timeout=360):
+        super().__init__(timeout=timeout)
+        self.conditions = {
+            'Cramped': False,
+            'Harmful': False,
+            'Isolated': False,
+            'Obscured': False,
+            'Precarious': False,
+            'Sheltered': False,
+            'Suffocating': False,
+            'Neutral': True
+        }
+
+    def reset_button_style(self):
+        # Set all button colors
+        for child in self.children:
+            if(child.custom_id in self.conditions):
+                if(self.conditions[child.custom_id]):
+                    child.style = discord.ButtonStyle.green
+                else:
+                    child.style = discord.ButtonStyle.gray
+
+    @discord.ui.button(label="Reset", style=discord.ButtonStyle.red, row=4)
+    async def reset(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # Get embedding
+        #condition_name = 'reset'
+        #embed = self.get_condition_embed(condition_name)
+
+        # Edit original message for successful interaction
+        self.reset_button_style()
+        await interaction.response.edit_message(attachments=[discord.File(GenerateImage(250, 1, self.conditions), 'battlefield.jpg')], view=self)
+
+    @discord.ui.button(label="sheltered".title(), style=discord.ButtonStyle.gray, emoji="🏡", custom_id='Sheltered', row=1)
+    async def sheltered(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.conditions['Sheltered'] = not self.conditions['Sheltered']
+        # Edit original message for successful interaction
+        self.reset_button_style()
+        await interaction.response.edit_message(view=self)
+        
+    @discord.ui.button(label="suffocating".title(), style=discord.ButtonStyle.gray, emoji="💦", custom_id='Suffocating', row=1)
+    async def suffocating(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.conditions['Suffocating'] = not self.conditions['Suffocating']
+        # Edit original message for successful interaction
+        self.reset_button_style()
+        await interaction.response.edit_message(view=self)
+
+    @discord.ui.button(label="precarious".title(), style=discord.ButtonStyle.gray, emoji="⚠", custom_id='Precarious', row=1)
+    async def precarious(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.conditions['Precarious'] = not self.conditions['Precarious']
+        # Edit original message for successful interaction
+        self.reset_button_style()
+        await interaction.response.edit_message(view=self)    
+
+    @discord.ui.button(label="Obscured".title(), style=discord.ButtonStyle.gray, emoji="🦮", custom_id='Obscured', row=1)
+    async def obscured(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.conditions['Obscured'] = not self.conditions['Obscured']
+        # Edit original message for successful interaction
+        self.reset_button_style()
+        await interaction.response.edit_message(view=self)    
+
+    @discord.ui.button(label="Isolated".title(), style=discord.ButtonStyle.gray, emoji="🪔", custom_id='Isolated', row=1)
+    async def isolated(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.conditions['Isolated'] = not self.conditions['Isolated']
+        # Edit original message for successful interaction
+        self.reset_button_style()
+        await interaction.response.edit_message(view=self)    
+
+    @discord.ui.button(label="Harmful".title(), style=discord.ButtonStyle.gray, emoji="🩹", custom_id='Harmful', row=2)
+    async def harmful(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.conditions['Harmful'] = not self.conditions['Harmful']
+        # Edit original message for successful interaction
+        self.reset_button_style()
+        await interaction.response.edit_message(view=self)    
+
+    @discord.ui.button(label="Cramped".title(), style=discord.ButtonStyle.gray, emoji="🦀", custom_id='Cramped', row=2)
+    async def cramped(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.conditions['Cramped'] = not self.conditions['Cramped']
+        # Edit original message for successful interaction
+        self.reset_button_style()
+        await interaction.response.edit_message(view=self)    
+
+    @discord.ui.button(label="Neutral".title(), style=discord.ButtonStyle.green, custom_id='Neutral', row=3)
+    async def neutral(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.conditions['Neutral'] = not self.conditions['Neutral']
+        # Edit original message for successful interaction
+        self.reset_button_style()
+        await interaction.response.edit_message(view=self)
