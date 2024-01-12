@@ -73,9 +73,12 @@ class GenerateSettlementButtons(discord.ui.View):
         self.add_item(ViewSettlementButton(label='View Settlement'))
         await interaction.response.edit_message(embeds=districtCell.toEmbed(), view=self)
     
-    async def ViewContent(self, interaction, embeds):
+    async def ViewContent(self, interaction, embeds, contents):
         self.clear_items()
         self.add_item(ViewSettlementButton(label='View Settlement'))
+        if len(contents) > 0:
+            for content in contents:
+                self.add_item(content.button)
         await interaction.response.edit_message(embeds=embeds, view=self)
 
 class DistrictButton(discord.ui.Button):
@@ -89,13 +92,13 @@ class DistrictButton(discord.ui.Button):
         await self.view.ViewDistrict(interaction)
 
 class ContentButton(discord.ui.Button):
-    def __init__(self, content='', embeds=[], *args, **kwargs):
+    def __init__(self, contents=[], embeds=[], *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.content = content
+        self.contents = contents
         self.embeds = embeds
     
     async def callback(self, interaction: discord.Interaction):
-        await self.view.ViewContent(interaction, self.embeds)
+        await self.view.ViewContent(interaction, self.embeds, self.contents)
 
 class ViewSettlementButton(discord.ui.Button):
     def __init__(self, *args, **kwargs):
@@ -145,6 +148,9 @@ class Cell:
         cell.contents[0].AddContent(random.choice(names), 'Detail Placeholder', int(hex(random.randrange(0, 2**24)), 16))
         cell.contents[0].AddContent(random.choice(names), 'Detail Placeholder', int(hex(random.randrange(0, 2**24)), 16))
         cell.contents[0].AddContent(random.choice(names), 'Detail Placeholder', int(hex(random.randrange(0, 2**24)), 16))
+        cell.contents[0].contents[0].AddContent(random.choice(names), 'Nested Placeholder', int(hex(random.randrange(0, 2**24)), 16))
+        cell.contents[0].contents[0].AddContent(random.choice(names), 'Nested Placeholder', int(hex(random.randrange(0, 2**24)), 16))
+        cell.contents[0].contents[0].AddContent(random.choice(names), 'Nested Placeholder', int(hex(random.randrange(0, 2**24)), 16))
         cell.rowcol = f'{row},{col}'
         cell.button = DistrictButton(label=cell.name, custom_id=cell.rowcol, embeds = cell.toEmbed(), content=cell.toString(), row=row)
         return cell
@@ -167,4 +173,4 @@ class CellContent:
     def AddContent(self, name, description, color):
         newContent = CellContent(name, description, color)
         self.contents.append(newContent)
-        self.button = ContentButton(label=self.name, embeds=self.toEmbed(True))
+        self.button = ContentButton(label=self.name, embeds=self.toEmbed(True), contents=self.contents)
