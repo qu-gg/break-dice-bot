@@ -458,7 +458,9 @@ async def generate_battlemap(interaction, dimension: int=250, complexity: int=1)
     if dimension > 1000:
         await interaction.response.send_message(content="Max dimension is 1000. Setting to 1000.", delete_after=5.0)
 
-    await interaction.response.send_message(view=GenerateBattlefieldButtons(dimension, complexity))
+    # Generate the Battlefield object and send the message
+    battlefield = GenerateBattlefieldButtons(dimension, complexity)
+    await interaction.response.send_message(view=battlefield, content=battlefield.return_string())
 
 
 @client.event
