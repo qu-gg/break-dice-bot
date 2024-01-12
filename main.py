@@ -13,6 +13,7 @@ from discord import app_commands
 from random_tables import RandomTables
 from battlefield import BattlefieldButtons
 from generatebattlefield import GenerateBattlefieldButtons
+from generatesettlement import GenerateSettlementButtons
 
 # Define Discord intents and client
 intents = discord.Intents.default()
@@ -461,6 +462,11 @@ async def generate_battlemap(interaction, dimension: int=250, complexity: int=1)
     # Generate the Battlefield object and send the message
     battlefield = GenerateBattlefieldButtons(dimension, complexity)
     await interaction.response.send_message(view=battlefield, content=battlefield.return_string())
+
+@tree.command(name="settlement", description="Generate a random settlement!")
+async def generate_settlement(interaction, size: int=0):
+    settlement = GenerateSettlementButtons(size)
+    await interaction.response.send_message(view=settlement)
 
 
 @client.event
