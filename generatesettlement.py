@@ -69,6 +69,8 @@ names = ['Lorem',
         'tristique', 
         'mollis']
 
+attributions = {'SpectacularSettlements': 'Powered by [Spectacular Settlements](https://nordgamesllc.com/product/spectacular-settlements-pdf/) copyright © Nord Games LLC'}
+
 class GenerateSettlementButtons(discord.ui.View):
     def __init__(self, size):
         super().__init__(timeout=None)
@@ -161,37 +163,38 @@ class Cell:
         #nonCommDetail = RollOnOracle(GetOracle(data, OracleFromOracle(GetOracle(data, 'Spectacular_Settlements/Oracles/Points_of_Interest/Non-Commercial_Location_Type/Non-Commercial Location Type'))))
         cell.name = districtPurpose
         cell.color = int(hex(random.randrange(0, 2**24)), 16)
-        cell.contents.append(CellContent(RollOnOracle(GetOracle(data, OracleFromOracle(GetOracle(data, 'Spectacular_Settlements/Oracles/Points_of_Interest/Non-Commercial_Location_Type/Non-Commercial Location Type')))), 'District Content Placeholder', int(hex(random.randrange(0, 2**24)), 16)))
-        cell.contents.append(CellContent(RollOnOracle(GetOracle(data, OracleFromOracle(GetOracle(data, 'Spectacular_Settlements/Oracles/Points_of_Interest/Non-Commercial_Location_Type/Non-Commercial Location Type')))), 'District Content Placeholder', int(hex(random.randrange(0, 2**24)), 16)))
-        cell.contents.append(CellContent(RollOnOracle(GetOracle(data, OracleFromOracle(GetOracle(data, 'Spectacular_Settlements/Oracles/Points_of_Interest/Non-Commercial_Location_Type/Non-Commercial Location Type')))), 'District Content Placeholder', int(hex(random.randrange(0, 2**24)), 16)))
+        cell.contents.append(CellContent(RollOnOracle(GetOracle(data, OracleFromOracle(GetOracle(data, 'Spectacular_Settlements/Oracles/Points_of_Interest/Non-Commercial_Location_Type/Non-Commercial Location Type')))), 'District Content Placeholder', int(hex(random.randrange(0, 2**24)), 16), attributions['SpectacularSettlements']))
+        cell.contents.append(CellContent(RollOnOracle(GetOracle(data, OracleFromOracle(GetOracle(data, 'Spectacular_Settlements/Oracles/Points_of_Interest/Non-Commercial_Location_Type/Non-Commercial Location Type')))), 'District Content Placeholder', int(hex(random.randrange(0, 2**24)), 16), attributions['SpectacularSettlements']))
+        cell.contents.append(CellContent(RollOnOracle(GetOracle(data, OracleFromOracle(GetOracle(data, 'Spectacular_Settlements/Oracles/Points_of_Interest/Non-Commercial_Location_Type/Non-Commercial Location Type')))), 'District Content Placeholder', int(hex(random.randrange(0, 2**24)), 16), attributions['SpectacularSettlements']))
 
-        cell.contents[0].AddContent(random.choice(names), 'Detail Placeholder', int(hex(random.randrange(0, 2**24)), 16))
-        cell.contents[0].AddContent(random.choice(names), 'Detail Placeholder', int(hex(random.randrange(0, 2**24)), 16))
-        cell.contents[0].AddContent(random.choice(names), 'Detail Placeholder', int(hex(random.randrange(0, 2**24)), 16))
-        cell.contents[0].contents[0].AddContent(random.choice(names), 'Nested Placeholder', int(hex(random.randrange(0, 2**24)), 16))
-        cell.contents[0].contents[0].AddContent(random.choice(names), 'Nested Placeholder', int(hex(random.randrange(0, 2**24)), 16))
-        cell.contents[0].contents[0].AddContent(random.choice(names), 'Nested Placeholder', int(hex(random.randrange(0, 2**24)), 16))
+        cell.contents[0].AddContent(random.choice(names), 'Detail Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
+        cell.contents[0].AddContent(random.choice(names), 'Detail Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
+        cell.contents[0].AddContent(random.choice(names), 'Detail Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
+        cell.contents[0].contents[0].AddContent(random.choice(names), 'Nested Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
+        cell.contents[0].contents[0].AddContent(random.choice(names), 'Nested Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
+        cell.contents[0].contents[0].AddContent(random.choice(names), 'Nested Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
         cell.rowcol = f'{row},{col}'
         cell.button = DistrictButton(label=cell.name, custom_id=cell.rowcol, embeds = cell.toEmbed(), content=cell.toString(), row=row)
         return cell
     
 class CellContent:
-    def __init__(self, name, description, color):
+    def __init__(self, name, description, color, attribution):
         self.name = name
         self.description = description
         self.color = color
+        self.attribution = attribution
         self.contents = []
         self.button = ContentButton(label=self.name, embeds=self.toEmbed(True))
     def toEmbed(self, recursive=True):
-        embed = discord.Embed(title=self.name, color=self.color, description=self.description)
+        embed = discord.Embed(title=self.name, color=self.color, description=f'{self.description}\n\n{self.attribution}')
         if(recursive):
             embeds = [embed]
             for content in self.contents:
                 embeds.append(content.toEmbed(recursive=False))
             return embeds
         return embed
-    def AddContent(self, name, description, color):
-        newContent = CellContent(name, description, color)
+    def AddContent(self, name, description, color, attribution):
+        newContent = CellContent(name, description, color, attribution)
         self.contents.append(newContent)
         self.button = ContentButton(label=self.name, embeds=self.toEmbed(True), contents=self.contents)
 
@@ -208,6 +211,8 @@ def GetOracle(data, id):
         for split in range(depth):
             depthString += f'{splitID[split]}/'
         depthString = depthString.strip('/')
+        print(depthString)
+        print(parentOracle)
         parentOracle = list(filter(lambda oracle: oracle['$id'].startswith(depthString), parentOracle['Oracles']))[0]
         for oracle in parentOracle['Oracles']:
             if oracle['$id'] == id:
@@ -255,11 +260,13 @@ if __name__ == '__main__':
     #print(quickNameSuffix)
     #print(trouble)
     #    print(project)
+    history = RollOnOracle(GetOracle(data, 'Worlds_Without_Number/Oracles/History/Why_fail'))
+    print(history)
     pass
     #nonComm = OracleFromOracle(GetOracle(data, 'Spectacular_Settlements/Oracles/Points_of_Interest/Non-Commercial_Location_Type/Non-Commercial Location Type'))
     #print(nonComm)
-    nonCommDetail = RollOnOracle(GetOracle(data, OracleFromOracle(GetOracle(data, 'Spectacular_Settlements/Oracles/Points_of_Interest/Non-Commercial_Location_Type/Non-Commercial Location Type'))))
-    print(nonCommDetail)
+    #nonCommDetail = RollOnOracle(GetOracle(data, OracleFromOracle(GetOracle(data, 'Spectacular_Settlements/Oracles/Points_of_Interest/Non-Commercial_Location_Type/Non-Commercial Location Type'))))
+    #print(nonCommDetail)
 
 
 

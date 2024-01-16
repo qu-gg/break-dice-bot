@@ -14,6 +14,7 @@ from random_tables import RandomTables
 from battlefield import BattlefieldButtons
 from generatebattlefield import GenerateBattlefieldButtons
 from generatesettlement import GenerateSettlementButtons
+from generateattributions import GenerateAttributionEmbed
 
 # Define Discord intents and client
 intents = discord.Intents.default()
@@ -467,6 +468,11 @@ async def generate_battlemap(interaction, dimension: int=250, complexity: int=1)
 async def generate_settlement(interaction, size: int=0):
     settlement = GenerateSettlementButtons(size)
     await interaction.response.send_message(view=settlement)
+
+@tree.command(name='attributions', description='See the supplements powering our random generators')
+async def attribution(interaction):
+    attributionEmbed = GenerateAttributionEmbed()
+    await interaction.response.send_message(embeds=[attributionEmbed])
 
 
 @client.event
