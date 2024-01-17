@@ -15,6 +15,8 @@ from battlefield import BattlefieldButtons
 from generatebattlefield import GenerateBattlefieldButtons
 from generatesettlement import GenerateSettlementButtons
 from generateattributions import GenerateAttributionEmbed
+import io
+import asyncio
 
 # Define Discord intents and client
 intents = discord.Intents.default()
@@ -466,8 +468,25 @@ async def generate_battlemap(interaction, dimension: int=250, complexity: int=1)
 
 @tree.command(name="settlement", description="Generate a random settlement!")
 async def generate_settlement(interaction, size: int=0):
+    await interaction.response.defer()
     settlement = GenerateSettlementButtons(size)
-    await interaction.response.send_message(view=settlement)
+    await interaction.followup.send(view=settlement)
+    stream = io.BytesIO()
+    jsonString = settlement.settlement.toJSON().encode()
+    stream.write(jsonString)
+    stream.seek(0)
+    await interaction.followup.send(file=discord.File(stream, 'settlement.json'), ephemeral=True)
+
+#@tree.command(name="savesettlement", description="Save a previously-generated settlement")
+#async def save_settlement(interaction, id: str):
+#    message = await interaction.channel.fetch_message(id)
+#    stream = io.BytesIO()
+#    print(discord.ui.View.from_message(message).children)
+#    jsonString = discord.ui.View.from_message(message).settlement.toJSON().encode()
+#    stream.write(jsonString)
+#    stream.seek(0)
+#    await interaction.channel.send(file=discord.File(stream, 'settlement.json'))
+#    print(id)
 
 @tree.command(name='attributions', description='See the supplements powering our random generators')
 async def attribution(interaction):

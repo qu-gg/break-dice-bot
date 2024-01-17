@@ -2,6 +2,8 @@ import discord
 import random
 import json
 import os
+import io
+import requests
 
 #ironswornFile = open('./data/ironsworn_oracles.json', 'r', encoding='utf8')
 #ironswornData = json.load(ironswornFile)
@@ -118,6 +120,9 @@ class ContentButton(discord.ui.Button):
     
     async def callback(self, interaction: discord.Interaction):
         await self.view.ViewContent(interaction, self.embeds, self.contents)
+    
+    def toJSON(self):
+        return json.dumps(self.__dict__, cls=SettlementJSONEncoder)
 
 class ViewSettlementButton(discord.ui.Button):
     def __init__(self, *args, **kwargs):
@@ -127,12 +132,25 @@ class ViewSettlementButton(discord.ui.Button):
         self.view.ViewSettlement()
         await interaction.response.edit_message(view=self.view, embeds=[])
 
+class DownloadSettlementButton(discord.ui.Button):
+    def __init__(self, settlement, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.settlement = settlement
+    async def callback(self, interaction: discord.Interaction):
+        stream = io.BytesIO()
+        jsonString = self.settlement.toJSON().encode()
+        stream.write(jsonString)
+        stream.seek(0)
+        await interaction.channel.send(file=discord.File(stream, 'settlement.json'))
+
 class Settlement:
     def __init__(self, size=0):
         self.size = size
         if(self.size == 0):
             self.size = random.randint(1,5)
         self.grid = [[Cell.NewCell(row, column) for column in range(self.size)] for row in range(self.size)]
+    def toJSON(self):
+        return json.dumps(self.__dict__, cls=SettlementJSONEncoder, indent=2)
 
 class Cell:
     def __init__(self):
@@ -158,14 +176,24 @@ class Cell:
 
     def NewCell(row, col):
         cell = Cell()
-        districtPurpose = RollOnOracle(GetOracle(data, 'Starforged/Oracles/Settlements/Projects'))
+        #districtPurpose = RollOnOracle(GetOracle(data, 'Starforged/Oracles/Settlements/Projects'))
+        districtPurpose = RollOnServer('Starforged/Oracles/Settlements/Projects')
         #nonComm = OracleFromOracle(GetOracle(data, 'Spectacular_Settlements/Points_of_Interest/Non-Commercial_Location_Type/Non-Commercial Location Type'))
         #nonCommDetail = RollOnOracle(GetOracle(data, OracleFromOracle(GetOracle(data, 'Spectacular_Settlements/Oracles/Points_of_Interest/Non-Commercial_Location_Type/Non-Commercial Location Type'))))
         cell.name = districtPurpose
         cell.color = int(hex(random.randrange(0, 2**24)), 16)
-        cell.contents.append(CellContent(RollOnOracle(GetOracle(data, OracleFromOracle(GetOracle(data, 'Spectacular_Settlements/Oracles/Points_of_Interest/Non-Commercial_Location_Type/Non-Commercial Location Type')))), 'District Content Placeholder', int(hex(random.randrange(0, 2**24)), 16), attributions['SpectacularSettlements']))
-        cell.contents.append(CellContent(RollOnOracle(GetOracle(data, OracleFromOracle(GetOracle(data, 'Spectacular_Settlements/Oracles/Points_of_Interest/Non-Commercial_Location_Type/Non-Commercial Location Type')))), 'District Content Placeholder', int(hex(random.randrange(0, 2**24)), 16), attributions['SpectacularSettlements']))
-        cell.contents.append(CellContent(RollOnOracle(GetOracle(data, OracleFromOracle(GetOracle(data, 'Spectacular_Settlements/Oracles/Points_of_Interest/Non-Commercial_Location_Type/Non-Commercial Location Type')))), 'District Content Placeholder', int(hex(random.randrange(0, 2**24)), 16), attributions['SpectacularSettlements']))
+        category = RollOnServer('Spectacular_Settlements/Oracles/Town/Non-Commercial_Location_Type')
+        actualContent = RollOnServer(f'Spectacular_Settlements/Oracles/Town/{category}')
+        cell.contents.append(CellContent(actualContent, 'District Content Placeholder', int(hex(random.randrange(0, 2**24)), 16), attributions['SpectacularSettlements']))
+        category = RollOnServer('Spectacular_Settlements/Oracles/Points_of_Interest/Non-Commercial_Location_Type/Non-Commercial Location Type')
+        actualContent = RollOnServer(f'Spectacular_Settlements/Oracles/Town/{category}')
+        cell.contents.append(CellContent(actualContent, 'District Content Placeholder', int(hex(random.randrange(0, 2**24)), 16), attributions['SpectacularSettlements']))
+        category = RollOnServer('Spectacular_Settlements/Oracles/Town/Non-Commercial_Location_Type')
+        actualContent = RollOnServer(f'Spectacular_Settlements/Oracles/Town/{category}')
+        cell.contents.append(CellContent(actualContent, 'District Content Placeholder', int(hex(random.randrange(0, 2**24)), 16), attributions['SpectacularSettlements']))
+        #cell.contents.append(CellContent(RollOnOracle(GetOracle(data, OracleFromOracle(GetOracle(data, 'Spectacular_Settlements/Oracles/Points_of_Interest/Non-Commercial_Location_Type/Non-Commercial Location Type')))), 'District Content Placeholder', int(hex(random.randrange(0, 2**24)), 16), attributions['SpectacularSettlements']))
+        #cell.contents.append(CellContent(RollOnOracle(GetOracle(data, OracleFromOracle(GetOracle(data, 'Spectacular_Settlements/Oracles/Points_of_Interest/Non-Commercial_Location_Type/Non-Commercial Location Type')))), 'District Content Placeholder', int(hex(random.randrange(0, 2**24)), 16), attributions['SpectacularSettlements']))
+        #cell.contents.append(CellContent(RollOnOracle(GetOracle(data, OracleFromOracle(GetOracle(data, 'Spectacular_Settlements/Oracles/Points_of_Interest/Non-Commercial_Location_Type/Non-Commercial Location Type')))), 'District Content Placeholder', int(hex(random.randrange(0, 2**24)), 16), attributions['SpectacularSettlements']))
 
         cell.contents[0].AddContent(random.choice(names), 'Detail Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
         cell.contents[0].AddContent(random.choice(names), 'Detail Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
@@ -176,6 +204,10 @@ class Cell:
         cell.rowcol = f'{row},{col}'
         cell.button = DistrictButton(label=cell.name, custom_id=cell.rowcol, embeds = cell.toEmbed(), content=cell.toString(), row=row)
         return cell
+    
+    def toJSON(self):
+        jsonDict = {'name': self.name, 'contents': self.contents, 'rowcol': self.rowcol, 'color': self.color}
+        return jsonDict
     
 class CellContent:
     def __init__(self, name, description, color, attribution):
@@ -197,6 +229,10 @@ class CellContent:
         newContent = CellContent(name, description, color, attribution)
         self.contents.append(newContent)
         self.button = ContentButton(label=self.name, embeds=self.toEmbed(True), contents=self.contents)
+    
+    def toJSON(self):
+        jsonDict = {'name': self.name, 'description': self.description, 'color': self.color, 'attribution': self.attribution, 'contents': self.contents}
+        return jsonDict
 
 def GetOracle(data, id):
     splitID = id.split('/')
@@ -242,6 +278,19 @@ def OracleFromOracle(oracle):
             return entry['Oracle rolls'][0]
     return ''
 
+class SettlementJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if hasattr(obj, 'toJSON'):
+            return obj.toJSON()
+        else:
+            return json.JSONEncoder.default(self, obj)
+        
+def RollOnServer(id):
+    url = 'http://18.220.137.34:8080/table'
+    payloadobj = {'id': id}
+    response = requests.post(url=url, data=payloadobj)
+    return response.text.strip('"')
+        
 if __name__ == '__main__':
     #nameType = OracleFromOracle(GetOracle(ironswornData, 'Ironsworn/Oracles/Settlement/Name'))
     #while nameType.endswith('Something_Else'):
