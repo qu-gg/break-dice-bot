@@ -130,7 +130,7 @@ class ViewSettlementButton(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         self.view.ViewSettlement()
-        await interaction.response.edit_message(view=self.view, embeds=[])
+        await interaction.response.edit_message(view=self.view, embeds=[self.view.settlement.overview.overview])
 
 class DownloadSettlementButton(discord.ui.Button):
     def __init__(self, settlement, *args, **kwargs):
@@ -146,11 +146,105 @@ class DownloadSettlementButton(discord.ui.Button):
 class Settlement:
     def __init__(self, size=0):
         self.size = size
-        if(self.size == 0):
+        if(self.size < 1):
             self.size = random.randint(1,5)
-        self.grid = [[Cell.NewCell(row, column) for column in range(self.size)] for row in range(self.size)]
+        if(self.size > 5):
+            self.size = 5
+        self.settlementType = self.RollSettlementType()
+        self.grid = [[Cell.NewCell(row, column, self.settlementType) for column in range(self.size)] for row in range(self.size)]
+        self.overview = SettlementOverview(self.settlementType)
     def toJSON(self):
         return json.dumps(self.__dict__, cls=SettlementJSONEncoder, indent=2)
+    def RollSettlementType(self):
+        if(self.size <= 2):
+            return random.choice(['Trading Post', 'Village'])
+        elif(self.size <= 3):
+            return random.choice(['Trading Post', 'Town'])
+        elif(self.size <= 5):
+            return random.choice(['Town', 'City'])
+        return 'Town'
+        #return random.choice(['Trading Post', 'Village', 'Town', 'City'])
+    
+class SettlementOverview:
+    def __init__(self, settlementType):
+        self.settlementType = settlementType
+        if(self.settlementType == 'Trading Post'):
+            self.initializeTradingPost()
+        elif(self.settlementType == 'Village'):
+            self.initializeVillage()
+        elif(self.settlementType == 'Town'):
+            self.initializeTown()
+        elif(self.settlementType == 'City'):
+            self.initializeCity()
+    def initializeTradingPost(self):
+        self.condition = RollOnServer('Spectacular_Settlements/Oracles/Trading Post/Condition')
+        self.visitorTraffic = RollOnServer('Spectacular_Settlements/Oracles/Trading Post/Visitor Traffic')
+        self.residentPopulation = RollOnServer('Spectacular_Settlements/Oracles/Trading Post/Resident Population')
+        self.residentDisposition = RollOnServer('Spectacular_Settlements/Oracles/Trading Post/Disposition')
+        self.lawEnforcement = RollOnServer('Spectacular_Settlements/Oracles/Trading Post/Law Enforcement')
+        self.leadership = RollOnServer('Spectacular_Settlements/Oracles/Trading Post/Leadership')
+        self.events = RollOnServer('Spectacular_Settlements/Oracles/Trading Post/Events')
+        self.opportunities = RollOnServer('Spectacular_Settlements/Oracles/Trading Post/Opportunities')
+        self.overview = self.GenerateOverviewTradingPost()
+    def GenerateOverviewTradingPost(self):
+        embed = discord.Embed(title='Trading Post', description=f'**Condition:** {self.condition}')
+        embed.add_field(name='**Traffic**', value=self.visitorTraffic)
+        embed.add_field(name='**Residents**', value=f'Population: {self.residentPopulation}\nDisposition: {self.residentDisposition}')
+        embed.add_field(name='**Leadership**', value=f'Style: {self.leadership}\nLaw Enforcement: {self.lawEnforcement}')
+        embed.add_field(name='**Hooks**', value=f'{self.events}\n{self.opportunities}')
+        return embed
+    def initializeVillage(self):
+        self.numHardships = int(RollOnServer('Spectacular_Settlements/Oracles/Village/Hardship Likelihood'))
+        self.hardships = []
+        for hardship in range(self.numHardships):
+            self.hardships.append(RollOnServer('Spectacular_Settlements/Oracles/Village/Hardship Type'))
+        self.condition = RollOnServer('Spectacular_Settlements/Oracles/Village/Condition')
+        self.resource = RollOnServer('Spectacular_Settlements/Oracles/Village/Resource')
+        self.recentHistory = RollOnServer('Spectacular_Settlements/Oracles/Village/Recent History')
+        self.residentPopulation = RollOnServer('Spectacular_Settlements/Oracles/Village/Population Density')
+        self.disposition = RollOnServer('Spectacular_Settlements/Oracles/Village/Disposition')
+        self.overview = self.GenerateOverviewVillage()
+    def GenerateOverviewVillage(self):
+        embed = discord.Embed(title='Village', description=f'**Condition:** {self.condition}')
+        embed.add_field(name='**Resource**', value=self.resource)
+        embed.add_field(name='**Recent History**', value=self.recentHistory)
+        embed.add_field(name='**Hardships**', value='\n'.join(self.hardships))
+        embed.add_field(name='**Residents**', value=f'Population: {self.residentPopulation}\nDisposition: {self.disposition}')
+        return embed
+    def initializeTown(self):
+        self.priority = RollOnServer('Spectacular_Settlements/Oracles/Town/Priority')
+        self.specialty = RollOnServer('Spectacular_Settlements/Oracles/Town/Specialty')
+        self.condition = RollOnServer('Spectacular_Settlements/Oracles/Town/Condition')
+        self.prosperity = RollOnServer('Spectacular_Settlements/Oracles/Town/Prosperity')
+        self.residentPopulation = RollOnServer('Spectacular_Settlements/Oracles/Town/Population Density')
+        self.disposition = RollOnServer('Spectacular_Settlements/Oracles/Town/Disposition')
+        self.leadership = RollOnServer('Spectacular_Settlements/Oracles/Town/Leadership')
+        self.lawEnforcement = RollOnServer('Spectacular_Settlements/Oracles/Town/Law Enforcement')
+        self.overview = self.GenerateOverviewTown()
+    def GenerateOverviewTown(self):
+        embed = discord.Embed(title='Town', description=f'**Specialty:** {self.specialty}\n**Priority:** {self.priority}')
+        embed.add_field(name='**Condition**', value=self.condition)
+        embed.add_field(name='**Prosperity**', value=self.prosperity)
+        embed.add_field(name='**Residents**', value=f'Population: {self.residentPopulation}\nDisposition: {self.disposition}')
+        embed.add_field(name='**Leadership**', value=f'Style: {self.leadership}\nLaw Enforcement: {self.lawEnforcement}')
+        return embed
+    def initializeCity(self):
+        self.priority = RollOnServer('Spectacular_Settlements/Oracles/City/Priority')
+        self.stewardship = RollOnServer('Spectacular_Settlements/Oracles/City/Stewardship')
+        self.condition = RollOnServer('Spectacular_Settlements/Oracles/City/General Condition')
+        self.residentPopulation = RollOnServer('Spectacular_Settlements/Oracles/City/Population Density')
+        self.disposition = RollOnServer('Spectacular_Settlements/Oracles/City/Disposition')
+        self.leadership = RollOnServer('Spectacular_Settlements/Oracles/City/Leadership')
+        self.lawEnforcement = RollOnServer('Spectacular_Settlements/Oracles/City/Law Enforcement')
+        self.overview = self.GenerateOverviewCity()
+    def GenerateOverviewCity(self):
+        embed = discord.Embed(title='City', description=f'**Priority:** {self.priority}\n**Stewardship:** {self.stewardship}')
+        embed.add_field(name='**Condition**', value=self.condition)
+        embed.add_field(name='**Residents**', value=f'Population: {self.residentPopulation}\nDisposition: {self.disposition}')
+        embed.add_field(name='**Leadership**', value=f'Style: {self.leadership}\nLaw Enforcement: {self.lawEnforcement}')
+        return embed
+    def toJSON(self):
+        return {}
 
 class Cell:
     def __init__(self):
@@ -174,33 +268,105 @@ class Cell:
             embeds.append(content.toEmbed(False))
         return embeds
 
-    def NewCell(row, col):
+    def NewCell(row, col, settlementType):
         cell = Cell()
-        #districtPurpose = RollOnOracle(GetOracle(data, 'Starforged/Oracles/Settlements/Projects'))
-        districtPurpose = RollOnServer('Starforged/Oracles/Settlements/Projects')
-        #nonComm = OracleFromOracle(GetOracle(data, 'Spectacular_Settlements/Points_of_Interest/Non-Commercial_Location_Type/Non-Commercial Location Type'))
-        #nonCommDetail = RollOnOracle(GetOracle(data, OracleFromOracle(GetOracle(data, 'Spectacular_Settlements/Oracles/Points_of_Interest/Non-Commercial_Location_Type/Non-Commercial Location Type'))))
-        cell.name = districtPurpose
-        cell.color = int(hex(random.randrange(0, 2**24)), 16)
-        category = RollOnServer('Spectacular_Settlements/Oracles/Town/Non-Commercial_Location_Type')
-        actualContent = RollOnServer(f'Spectacular_Settlements/Oracles/Town/{category}')
-        cell.contents.append(CellContent(actualContent, 'District Content Placeholder', int(hex(random.randrange(0, 2**24)), 16), attributions['SpectacularSettlements']))
-        category = RollOnServer('Spectacular_Settlements/Oracles/Points_of_Interest/Non-Commercial_Location_Type/Non-Commercial Location Type')
-        actualContent = RollOnServer(f'Spectacular_Settlements/Oracles/Town/{category}')
-        cell.contents.append(CellContent(actualContent, 'District Content Placeholder', int(hex(random.randrange(0, 2**24)), 16), attributions['SpectacularSettlements']))
-        category = RollOnServer('Spectacular_Settlements/Oracles/Town/Non-Commercial_Location_Type')
-        actualContent = RollOnServer(f'Spectacular_Settlements/Oracles/Town/{category}')
-        cell.contents.append(CellContent(actualContent, 'District Content Placeholder', int(hex(random.randrange(0, 2**24)), 16), attributions['SpectacularSettlements']))
-        #cell.contents.append(CellContent(RollOnOracle(GetOracle(data, OracleFromOracle(GetOracle(data, 'Spectacular_Settlements/Oracles/Points_of_Interest/Non-Commercial_Location_Type/Non-Commercial Location Type')))), 'District Content Placeholder', int(hex(random.randrange(0, 2**24)), 16), attributions['SpectacularSettlements']))
-        #cell.contents.append(CellContent(RollOnOracle(GetOracle(data, OracleFromOracle(GetOracle(data, 'Spectacular_Settlements/Oracles/Points_of_Interest/Non-Commercial_Location_Type/Non-Commercial Location Type')))), 'District Content Placeholder', int(hex(random.randrange(0, 2**24)), 16), attributions['SpectacularSettlements']))
-        #cell.contents.append(CellContent(RollOnOracle(GetOracle(data, OracleFromOracle(GetOracle(data, 'Spectacular_Settlements/Oracles/Points_of_Interest/Non-Commercial_Location_Type/Non-Commercial Location Type')))), 'District Content Placeholder', int(hex(random.randrange(0, 2**24)), 16), attributions['SpectacularSettlements']))
+        if(settlementType == 'Trading Post'):
+            districtPurpose = RollOnServer('Spectacular_Settlements/Oracles/Trading Post/Specialty')
+            cell.name = districtPurpose
+            cell.color = int(hex(random.randrange(0, 2**24)), 16)
+            for poi in range(3):
+                commercialType = random.choice(['Shop', 'Service'])
+                commercialSpecific = RollOnServer(f'Spectacular_Settlements/Oracles/Trading Post/{commercialType}s')
+                cell.contents.append(CellContent(commercialSpecific, 'Placeholder', int(hex(random.randrange(0, 2**24)), 16), attributions['SpectacularSettlements']))
+                cell.contents[poi].AddContent(random.choice(names), 'NPC Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
+                cell.contents[poi].AddContent(random.choice(names), 'NPC Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
+                cell.contents[poi].AddContent(random.choice(names), 'NPC Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
+                for content in range(len(cell.contents[poi].contents)):
+                    cell.contents[poi].contents[content].AddContent(random.choice(names), 'NPC Hooks/Detail/Relationship', int(hex(random.randrange(0, 2**24)), 16), '')
+                    cell.contents[poi].contents[content].AddContent(random.choice(names), 'NPC Hooks/Detail/Relationship', int(hex(random.randrange(0, 2**24)), 16), '')
+                    cell.contents[poi].contents[content].AddContent(random.choice(names), 'NPC Hooks/Detail/Relationship', int(hex(random.randrange(0, 2**24)), 16), '')
+        elif(settlementType == 'Village'):
+            districtPurpose = RollOnServer('Spectacular_Settlements/Oracles/Village/Specialty')
+            cell.name = districtPurpose
+            cell.color = int(hex(random.randrange(0, 2**24)), 16)
+            for poi in range(3):
+                locationType = random.choices(['Place of Worship', 'Place of Gathering', 'Other Locations'], [0.1, 0.4, 0.5])[0]
+                if(locationType == 'Place of Worship'):
+                    size = RollOnServer(f'Spectacular_Settlements/Oracles/Village/Place of Worship Size')
+                    location = f'Place of Worship ({size})'
+                else:
+                    location = RollOnServer(f'Spectacular_Settlements/Oracles/Village/{locationType}')
+                cell.contents.append(CellContent(location, 'Placeholder', int(hex(random.randrange(0, 2**24)), 16), attributions['SpectacularSettlements']))
+                cell.contents[poi].AddContent(random.choice(names), 'NPC Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
+                cell.contents[poi].AddContent(random.choice(names), 'NPC Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
+                cell.contents[poi].AddContent(random.choice(names), 'NPC Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
+                for content in range(len(cell.contents[poi].contents)):
+                    cell.contents[poi].contents[content].AddContent(random.choice(names), 'NPC Hooks/Detail/Relationship', int(hex(random.randrange(0, 2**24)), 16), '')
+                    cell.contents[poi].contents[content].AddContent(random.choice(names), 'NPC Hooks/Detail/Relationship', int(hex(random.randrange(0, 2**24)), 16), '')
+                    cell.contents[poi].contents[content].AddContent(random.choice(names), 'NPC Hooks/Detail/Relationship', int(hex(random.randrange(0, 2**24)), 16), '')
+        elif(settlementType == 'Town'):
+            districtPurpose = random.choices(['Non-Commercial', 'Commercial'], [0.75, 0.25])[0]
+            
+            cell.color = int(hex(random.randrange(0, 2**24)), 16)
+            if(districtPurpose == 'Non-Commercial'):
+                for poi in range(3):
+                    category = RollOnServer('Spectacular_Settlements/Oracles/Town/Non-Commercial Location Type')
+                    cell.name = category.split()[-1]
+                    location = RollOnServer(f'Spectacular_Settlements/Oracles/Town/{category}')
+                    cell.contents.append(CellContent(location, 'Placeholder', int(hex(random.randrange(0, 2**24)), 16), attributions['SpectacularSettlements']))
+                    cell.contents[poi].AddContent(random.choice(names), 'NPC Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
+                    cell.contents[poi].AddContent(random.choice(names), 'NPC Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
+                    cell.contents[poi].AddContent(random.choice(names), 'NPC Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
+                    for content in range(len(cell.contents[poi].contents)):
+                        cell.contents[poi].contents[content].AddContent(random.choice(names), 'NPC Hooks/Detail/Relationship', int(hex(random.randrange(0, 2**24)), 16), '')
+                        cell.contents[poi].contents[content].AddContent(random.choice(names), 'NPC Hooks/Detail/Relationship', int(hex(random.randrange(0, 2**24)), 16), '')
+                        cell.contents[poi].contents[content].AddContent(random.choice(names), 'NPC Hooks/Detail/Relationship', int(hex(random.randrange(0, 2**24)), 16), '')
+            elif(districtPurpose == 'Commercial'):
+                for poi in range(3):
+                    category = RollOnServer('Spectacular_Settlements/Oracles/Town/Shop or Service')
+                    cell.name = category
+                    location = RollOnServer(f'Spectacular_Settlements/Oracles/Town/{category}s')
+                    cell.contents.append(CellContent(location, 'Placeholder', int(hex(random.randrange(0, 2**24)), 16), attributions['SpectacularSettlements']))
+                    cell.contents[poi].AddContent(random.choice(names), 'NPC Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
+                    cell.contents[poi].AddContent(random.choice(names), 'NPC Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
+                    cell.contents[poi].AddContent(random.choice(names), 'NPC Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
+                    for content in range(len(cell.contents[poi].contents)):
+                        cell.contents[poi].contents[content].AddContent(random.choice(names), 'NPC Hooks/Detail/Relationship', int(hex(random.randrange(0, 2**24)), 16), '')
+                        cell.contents[poi].contents[content].AddContent(random.choice(names), 'NPC Hooks/Detail/Relationship', int(hex(random.randrange(0, 2**24)), 16), '')
+                        cell.contents[poi].contents[content].AddContent(random.choice(names), 'NPC Hooks/Detail/Relationship', int(hex(random.randrange(0, 2**24)), 16), '')
+        elif(settlementType == 'City'):
+            districtPurpose = RollOnServer('Spectacular_Settlements/Oracles/City/District Type')
+            cell.name = districtPurpose
+            cell.color = int(hex(random.randrange(0, 2**24)), 16)
+            for poi in range(3):
+                location = RollOnServer(f'Spectacular_Settlements/Oracles/City/{districtPurpose} District Additional Locations')
+                cell.contents.append(CellContent(location, 'Placeholder', int(hex(random.randrange(0, 2**24)), 16), attributions['SpectacularSettlements']))
+                cell.contents[poi].AddContent(random.choice(names), 'NPC Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
+                cell.contents[poi].AddContent(random.choice(names), 'NPC Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
+                cell.contents[poi].AddContent(random.choice(names), 'NPC Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
+                for content in range(len(cell.contents[poi].contents)):
+                    cell.contents[poi].contents[content].AddContent(random.choice(names), 'NPC Hooks/Detail/Relationship', int(hex(random.randrange(0, 2**24)), 16), '')
+                    cell.contents[poi].contents[content].AddContent(random.choice(names), 'NPC Hooks/Detail/Relationship', int(hex(random.randrange(0, 2**24)), 16), '')
+                    cell.contents[poi].contents[content].AddContent(random.choice(names), 'NPC Hooks/Detail/Relationship', int(hex(random.randrange(0, 2**24)), 16), '')
+        #districtPurpose = RollOnServer('Starforged/Oracles/Settlements/Projects')
+        #cell.name = districtPurpose
+        #cell.color = int(hex(random.randrange(0, 2**24)), 16)
+        #category = RollOnServer('Spectacular_Settlements/Oracles/Town/Non-Commercial Location Type')
+        #actualContent = RollOnServer(f'Spectacular_Settlements/Oracles/Town/{category}')
+        #cell.contents.append(CellContent(actualContent, 'District Content Placeholder', int(hex(random.randrange(0, 2**24)), 16), attributions['SpectacularSettlements']))
+        #category = RollOnServer('Spectacular_Settlements/Oracles/Town/Non-Commercial Location Type')
+        #actualContent = RollOnServer(f'Spectacular_Settlements/Oracles/Town/{category}')
+        #cell.contents.append(CellContent(actualContent, 'District Content Placeholder', int(hex(random.randrange(0, 2**24)), 16), attributions['SpectacularSettlements']))
+        #category = RollOnServer('Spectacular_Settlements/Oracles/Town/Non-Commercial Location Type')
+        #actualContent = RollOnServer(f'Spectacular_Settlements/Oracles/Town/{category}')
+        #cell.contents.append(CellContent(actualContent, 'District Content Placeholder', int(hex(random.randrange(0, 2**24)), 16), attributions['SpectacularSettlements']))
 
-        cell.contents[0].AddContent(random.choice(names), 'Detail Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
-        cell.contents[0].AddContent(random.choice(names), 'Detail Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
-        cell.contents[0].AddContent(random.choice(names), 'Detail Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
-        cell.contents[0].contents[0].AddContent(random.choice(names), 'Nested Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
-        cell.contents[0].contents[0].AddContent(random.choice(names), 'Nested Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
-        cell.contents[0].contents[0].AddContent(random.choice(names), 'Nested Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
+        #cell.contents[0].AddContent(random.choice(names), 'Detail Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
+        #cell.contents[0].AddContent(random.choice(names), 'Detail Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
+        #cell.contents[0].AddContent(random.choice(names), 'Detail Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
+        #cell.contents[0].contents[0].AddContent(random.choice(names), 'Nested Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
+        #cell.contents[0].contents[0].AddContent(random.choice(names), 'Nested Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
+        #cell.contents[0].contents[0].AddContent(random.choice(names), 'Nested Placeholder', int(hex(random.randrange(0, 2**24)), 16), '')
         cell.rowcol = f'{row},{col}'
         cell.button = DistrictButton(label=cell.name, custom_id=cell.rowcol, embeds = cell.toEmbed(), content=cell.toString(), row=row)
         return cell

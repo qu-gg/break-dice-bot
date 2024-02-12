@@ -470,12 +470,12 @@ async def generate_battlemap(interaction, dimension: int=250, complexity: int=1)
 async def generate_settlement(interaction, size: int=0):
     await interaction.response.defer()
     settlement = GenerateSettlementButtons(size)
-    await interaction.followup.send(view=settlement)
+    await interaction.followup.send(view=settlement, embeds=[settlement.settlement.overview.overview])
     stream = io.BytesIO()
     jsonString = settlement.settlement.toJSON().encode()
     stream.write(jsonString)
     stream.seek(0)
-    await interaction.followup.send(file=discord.File(stream, 'settlement.json'), ephemeral=True)
+    #await interaction.followup.send(file=discord.File(stream, 'settlement.json'), ephemeral=True)
 
 #@tree.command(name="savesettlement", description="Save a previously-generated settlement")
 #async def save_settlement(interaction, id: str):
