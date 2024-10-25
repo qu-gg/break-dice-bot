@@ -92,6 +92,7 @@ class GenerateSettlementButtons(discord.ui.View):
         for content in districtCell.contents:
             self.add_item(content.button)
         self.add_item(ViewSettlementButton(label='View Settlement'))
+        self.add_item(DownloadSettlementButton(settlement=self.settlement, label='Download Settlement'))
         await interaction.response.edit_message(embeds=districtCell.toEmbed(), view=self)
     
     async def ViewContent(self, interaction, embeds, contents):
@@ -100,6 +101,8 @@ class GenerateSettlementButtons(discord.ui.View):
             for content in contents:
                 self.add_item(content.button)
         self.add_item(ViewSettlementButton(label='View Settlement'))
+        self.add_item(DownloadSettlementButton(settlement=self.settlement, label='Download Settlement'))
+
         await interaction.response.edit_message(embeds=embeds, view=self)
 
 class DistrictButton(discord.ui.Button):
