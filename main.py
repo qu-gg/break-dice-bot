@@ -13,6 +13,10 @@ from discord import app_commands
 from random_tables import RandomTables
 from battlefield import BattlefieldButtons
 from generatebattlefield import GenerateBattlefieldButtons
+from generatesettlement import GenerateSettlementButtons
+from generateattributions import GenerateAttributionEmbed
+import io
+import asyncio
 
 # Define Discord intents and client
 intents = discord.Intents.default()
@@ -461,6 +465,33 @@ async def generate_battlemap(interaction, dimension: int=250, complexity: int=1)
     # Generate the Battlefield object and send the message
     battlefield = GenerateBattlefieldButtons(dimension, complexity)
     await interaction.response.send_message(view=battlefield, content=battlefield.return_string())
+
+@tree.command(name="settlement", description="Generate a random settlement!")
+async def generate_settlement(interaction, size: int=0):
+    await interaction.response.defer()
+    settlement = GenerateSettlementButtons(size)
+    await interaction.followup.send(view=settlement, embeds=[settlement.settlement.overview.overview])
+    stream = io.BytesIO()
+    jsonString = settlement.settlement.toJSON().encode()
+    stream.write(jsonString)
+    stream.seek(0)
+    #await interaction.followup.send(file=discord.File(stream, 'settlement.json'), ephemeral=True)
+
+#@tree.command(name="savesettlement", description="Save a previously-generated settlement")
+#async def save_settlement(interaction, id: str):
+#    message = await interaction.channel.fetch_message(id)
+#    stream = io.BytesIO()
+#    print(discord.ui.View.from_message(message).children)
+#    jsonString = discord.ui.View.from_message(message).settlement.toJSON().encode()
+#    stream.write(jsonString)
+#    stream.seek(0)
+#    await interaction.channel.send(file=discord.File(stream, 'settlement.json'))
+#    print(id)
+
+@tree.command(name='attributions', description='See the supplements powering our random generators')
+async def attribution(interaction):
+    attributionEmbed = GenerateAttributionEmbed()
+    await interaction.response.send_message(embeds=[attributionEmbed])
 
 
 @client.event
